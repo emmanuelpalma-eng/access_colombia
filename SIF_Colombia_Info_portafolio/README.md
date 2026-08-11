@@ -3,9 +3,16 @@
 Migra las 7 tablas de `Info portafolio.accdb` a SQL Server (POC). La tabla de
 hechos `tbl_Valores` tiene ~4.18 millones de filas.
 
+**El esquema (`schema.sql`) quedó supersedido por `Colombia/poc_colombia/schema/`**
+(modelo consolidado de las 6 fuentes -- `tbl_Niveles`, `tbl_Tiempos`,
+`tbl_Cuentas`, `tbl_Centros`, `tbl_Valores`, etc. ahora son dimensiones/facts
+compartidos, no exclusivos de Info Portafolio). El archivo original queda
+como `schema.sql.legacy`, solo de referencia histórica. `import_data.py` de
+esta carpeta ya apunta al esquema nuevo.
+
 ## Uso
 
-1. Correr `schema.sql` una vez contra la base destino.
+1. Correr `Colombia/poc_colombia/` (ver su README) contra la base destino -- ya no se corre `schema.sql` de esta carpeta.
 2. Revisar que el `.accdb` tenga el esquema esperado (opcional, no toca SQL Server):
    ```
    python import_data.py --check-schema-only
@@ -40,3 +47,6 @@ Ver los comentarios en `schema.sql` para el detalle completo. En corto:
   `tbl_Centros` sin llave única) -- se dejan como índice para no perder esas
   filas reales.
 - 1 fila placeholder (`Cod_Cuenta = 0`) se filtra al importar `tbl_Valores`.
+- `tbl_Fechas` es compartida con `SIF_Colombia_351` en la misma base de datos
+  `poc_colombia` -- este proyecto no la crea ni la borra/recarga, para no
+  chocar con las FKs activas de ese otro proyecto.

@@ -2,9 +2,15 @@
 
 Migra las 13 tablas de `Informes FIC - 351.accdb` a SQL Server (POC).
 
+**El esquema (`schema.sql`) quedó supersedido por `Colombia/poc_colombia/schema/`**
+(modelo consolidado de las 6 fuentes -- `tbl_Fechas`, `tbl_Contratos`,
+`tbl_Inmuebles`, etc. ahora son dimensiones compartidas, no exclusivas de
+351). El archivo original queda como `schema.sql.legacy`, solo de referencia
+histórica. `import_data.py` de esta carpeta ya apunta al esquema nuevo.
+
 ## Uso
 
-1. Correr `schema.sql` una vez contra la base destino (crea las 13 tablas, PKs, FKs e índices).
+1. Correr `Colombia/poc_colombia/` (ver su README) contra la base destino -- ya no se corre `schema.sql` de esta carpeta.
 2. Revisar que el `.accdb` tenga el esquema esperado (opcional, no toca SQL Server):
    ```
    python import_data.py --check-schema-only

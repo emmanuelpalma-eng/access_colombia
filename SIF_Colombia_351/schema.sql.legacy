@@ -1,4 +1,11 @@
 /* ============================================================================
+   *** SUPERSEDIDO por Colombia/poc_colombia/schema/ ***
+   Este archivo queda solo como referencia historica de las decisiones
+   tomadas durante la migracion inicial de FIC-351 (renombrado a
+   schema.sql.legacy). El esquema autoritativo vigente vive en
+   poc_colombia/schema/01 a 05 (tbl_Fechas, tbl_Contratos, tbl_Inmuebles,
+   etc. ahora son compartidos entre las 6 fuentes, no exclusivos de 351).
+
    Script de creación de tablas - SIF Colombia - Informes FIC - 351
    Generado a partir del ERD (Lucidchart) de "SIF Colombia - Informes FIC - 351.accdb"
    y ajustado contra los datos reales del .accdb (ver decisiones abajo).

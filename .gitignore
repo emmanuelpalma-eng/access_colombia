@@ -2,5 +2,9 @@
 # no deben versionarse en git. OneDrive ya las sincroniza.
 Bases_Colombia/
 
+# Archivo de negocio (facturacion, prediales, etc.), no es codigo de este
+# repo y puede contener informacion sensible/voluminosa.
+Colombia_2024/
+
 __pycache__/
 *.pyc

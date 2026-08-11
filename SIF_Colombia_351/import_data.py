@@ -1,22 +1,26 @@
 """
-Importa las 13 tablas de "Informes FIC - 351.accdb" a SQL Server usando pyodbc.
-Requiere que schema.sql ya se haya corrido una vez contra la base destino.
+Importa las 13 tablas de "Informes FIC - 351.accdb" a SQL Server (poc_colombia)
+usando pyodbc, via el esquema consolidado en Colombia/poc_colombia/schema/.
+
+Flujo por tabla: carga a stg.<tabla> (sin PK/FK, TRUNCATE + insert masivo) y
+luego llama a etl.usp_ReemplazarDimension (dimensiones) o
+etl.usp_CargarFactoParticionado (hechos) para mover los datos a dbo con las
+validaciones de FK correspondientes -- ya no hay logica de NOCHECK/CHECK
+ad-hoc en este script, vive centralizada en los SPs (ver
+poc_colombia/schema/09_sp_etl.sql).
 
 Pensado para correrse en tu propia terminal (no via un agente), porque pide
-la contrasena de SQL de forma interactiva con getpass (no queda en el
-historial de la terminal ni en ningun chat).
+la contrasena de SQL de forma interactiva con getpass.
 
 USO:
     1) Revisar el esquema real de Access antes de importar (no toca SQL Server):
        python import_data.py --check-schema-only
 
-    2) Import real (borra e inserta de nuevo cada tabla, re-corrible sin duplicar):
+    2) Import real:
        python import_data.py --sql-server "mi_servidor" --sql-user "mi_usuario"
 
-Parametros opcionales:
-    --access-path   Ruta al .accdb (por defecto, la ruta ya conocida)
-    --sql-database  Nombre de la base destino (por defecto poc_colombia)
-    --batch-size    Filas por lote para el insert masivo (por defecto 2000)
+Requisito previo: correr Colombia/poc_colombia/ (ver su README) contra la
+base destino -- este script ya no crea el esquema.
 """
 
 import argparse
@@ -31,42 +35,25 @@ DEFAULT_ACCESS_PATH = (
     r"\Colombia\Bases_Colombia\Informes FIC - 351.accdb"
 )
 
-# Orden de carga = orden de dependencias de FK definido en schema.sql.
-# Cada tupla es (nombre_tabla, mapeo_columnas_origen->destino, filtro_where_opcional).
-# Los filtros excluyen filas basura/placeholder detectadas en los datos reales
-# (ver notas en schema.sql, supuestos 7 y 10).
+# Cada tupla: (tabla, mapeo_columnas_origen->destino, filtro_where_opcional, tipo)
+# tipo = "dimension" (otras tablas tienen FK hacia esta -> usp_ReemplazarDimension)
+#      | "fact" (tabla de hechos, nadie la referencia -> usp_CargarFactoParticionado)
 TABLES = [
-    ("tbl_Fechas", {}, None),
-    ("tbl_Cuentas_EEFF", {}, None),
-    ("tbl_Usuarios", {}, None),
-    ("tbl_Inmuebles", {}, None),
-    ("tbl_Cruce_SIF", {}, "Cod_Cta <> 0"),  # 6 filas placeholder sin cuenta real
-    ("tbl_Cruce351", {}, None),  # Cod_Inm admite NULL (3 filas sin asignar)
-    ("tbl_Valores_Valor_Libros", {}, None),
-    ("VL_Disp_xa_Venta", {}, None),
+    ("tbl_Fechas", {}, None, "dimension"),
+    ("tbl_Cuentas_EEFF", {}, None, "dimension"),
+    ("tbl_Usuarios", {}, None, "dimension"),
+    ("tbl_Inmuebles", {}, None, "dimension"),
+    ("tbl_Cruce_SIF", {}, "Cod_Cta <> 0", "dimension"),  # 6 filas placeholder sin cuenta real
+    ("tbl_Cruce351", {}, None, "dimension"),  # Cod_Inm admite NULL (3 filas sin asignar)
+    ("tbl_Valores_Valor_Libros", {}, None, "fact"),
+    ("VL_Disp_xa_Venta", {}, None, "fact"),
     # Cod_Inm 0 y 5000: filas de totales/consolidado ("351 DF"), no una propiedad real.
     # Cod_Inm 997: propiedad real pero tbl_Inmuebles no tiene foto para esos meses.
-    ("tbl_ValorLibros_xInmueble", {}, "Cod_Inm NOT IN (0, 5000, 997)"),
-    ("VL_CentralPoint", {}, "FECHA IS NOT NULL"),  # 3 filas completamente vacias
-    ("tbl_Contratos", {}, None),
-    ("tbl_EEFF", {}, None),
-    ("F351", {"######": "Campo13"}, None),
-]
-
-# FKs que sí se sostienen con datos reales (ver schema.sql para las que se
-# evaluaron y se descartaron). Se desactivan antes de la carga -- para poder
-# insertar sin preocuparse por el orden -- y se revalidan al final con
-# WITH CHECK CHECK CONSTRAINT (a diferencia de solo CHECK, esto sí revisa
-# las filas ya existentes y avisa de inconsistencias reales).
-FK_CONSTRAINTS = [
-    ("tbl_Inmuebles", "FK_tbl_Inmuebles_tbl_Fechas"),
-    ("tbl_Cruce_SIF", "FK_tbl_Cruce_SIF_tbl_Cuentas_EEFF"),
-    ("tbl_Valores_Valor_Libros", "FK_tbl_Valores_Valor_Libros_tbl_Fechas"),
-    ("VL_Disp_xa_Venta", "FK_VL_Disp_xa_Venta_tbl_Inmuebles"),
-    ("tbl_ValorLibros_xInmueble", "FK_tbl_ValorLibros_xInmueble_tbl_Inmuebles"),
-    ("VL_CentralPoint", "FK_VL_CentralPoint_tbl_Fechas"),
-    ("tbl_EEFF", "FK_tbl_EEFF_tbl_Fechas"),
-    ("F351", "FK_F351_tbl_Fechas"),
+    ("tbl_ValorLibros_xInmueble", {}, "Cod_Inm NOT IN (0, 5000, 997)", "fact"),
+    ("VL_CentralPoint", {}, "FECHA IS NOT NULL", "fact"),  # 3 filas completamente vacias
+    ("tbl_Contratos", {}, None, "dimension"),
+    ("tbl_EEFF", {}, None, "fact"),
+    ("F351", {"######": "Campo13"}, None, "fact"),
 ]
 
 
@@ -88,23 +75,14 @@ def sql_connection(server, database, user, password):
     return pyodbc.connect(conn_str, autocommit=False)
 
 
-def set_fk_check(conn, enabled):
-    verb = "WITH CHECK CHECK" if enabled else "NOCHECK"
-    cursor = conn.cursor()
-    for table, constraint in FK_CONSTRAINTS:
-        cursor.execute(f"ALTER TABLE dbo.[{table}] {verb} CONSTRAINT [{constraint}]")
-    conn.commit()
-
-
 def check_schema(access_path):
     conn = access_connection(access_path)
     try:
         cursor = conn.cursor()
-        for table_name, _overrides, _where in TABLES:
+        for table_name, _overrides, _where, _kind in TABLES:
             # No usar cursor.columns() (SQLColumns): el driver de Access
             # puede devolver metadatos con una codificacion que pyodbc no
             # logra decodificar para ciertas tablas (UnicodeDecodeError).
-            # SELECT * + cursor.description evita ese camino del driver.
             cursor.execute(f"SELECT * FROM [{table_name}]")
             cols = [d[0] for d in cursor.description]
             cursor.execute(f"SELECT COUNT(*) FROM [{table_name}]")
@@ -115,58 +93,62 @@ def check_schema(access_path):
         conn.close()
 
 
+def load_to_staging(access_conn, sql_conn, table_name, overrides, where, batch_size):
+    sql_conn.cursor().execute(f"TRUNCATE TABLE stg.[{table_name}]")
+
+    access_cursor = access_conn.cursor()
+    query = f"SELECT * FROM [{table_name}]"
+    if where:
+        query += f" WHERE {where}"
+    access_cursor.execute(query)
+    src_columns = [d[0] for d in access_cursor.description]
+    dest_columns = [overrides.get(c, c) for c in src_columns]
+
+    col_list = ", ".join(f"[{c}]" for c in dest_columns)
+    placeholders = ", ".join("?" for _ in dest_columns)
+    insert_sql = f"INSERT INTO stg.[{table_name}] ({col_list}) VALUES ({placeholders})"
+
+    sql_cursor = sql_conn.cursor()
+    sql_cursor.fast_executemany = True
+
+    total = 0
+    while True:
+        rows = access_cursor.fetchmany(batch_size)
+        if not rows:
+            break
+        sql_cursor.executemany(insert_sql, [tuple(r) for r in rows])
+        total += len(rows)
+    sql_conn.commit()
+    return total
+
+
 def import_data(access_path, server, database, user, password, batch_size):
     sql_conn = sql_connection(server, database, user, password)
     access_conn = access_connection(access_path)
 
     try:
-        print("Desactivando FKs...")
-        set_fk_check(sql_conn, enabled=False)
-
-        for table_name, overrides, where in TABLES:
+        for table_name, overrides, where, kind in TABLES:
             print(f"Cargando {table_name}...", end=" ")
             sys.stdout.flush()
-
-            # DELETE previo para que el script se pueda re-correr sin duplicar
-            # filas en tablas que no tienen PK propia.
-            sql_conn.cursor().execute(f"DELETE FROM dbo.[{table_name}]")
-
-            access_cursor = access_conn.cursor()
-            query = f"SELECT * FROM [{table_name}]"
-            if where:
-                query += f" WHERE {where}"
-            access_cursor.execute(query)
-            src_columns = [d[0] for d in access_cursor.description]
-            dest_columns = [overrides.get(c, c) for c in src_columns]
-
-            col_list = ", ".join(f"[{c}]" for c in dest_columns)
-            placeholders = ", ".join("?" for _ in dest_columns)
-            insert_sql = f"INSERT INTO dbo.[{table_name}] ({col_list}) VALUES ({placeholders})"
-
-            sql_cursor = sql_conn.cursor()
-            sql_cursor.fast_executemany = True
-
-            total = 0
             try:
-                while True:
-                    rows = access_cursor.fetchmany(batch_size)
-                    if not rows:
-                        break
-                    sql_cursor.executemany(insert_sql, [tuple(r) for r in rows])
-                    total += len(rows)
+                staged = load_to_staging(access_conn, sql_conn, table_name, overrides, where, batch_size)
+
+                sp_cursor = sql_conn.cursor()
+                if kind == "dimension":
+                    sp_cursor.execute(
+                        "EXEC etl.usp_ReemplazarDimension @TablaDestino = ?, @TablaStaging = ?",
+                        f"dbo.{table_name}", f"stg.{table_name}",
+                    )
+                else:
+                    sp_cursor.execute(
+                        "EXEC etl.usp_CargarFactoParticionado @TablaDestino = ?, @TablaStaging = ?",
+                        f"dbo.{table_name}", f"stg.{table_name}",
+                    )
                 sql_conn.commit()
-                print(f"OK ({total} filas)")
+                print(f"OK ({staged} filas)")
             except Exception as ex:
                 sql_conn.rollback()
                 print(f"ERROR: {ex}")
-
-        print("Reactivando y validando FKs...")
-        try:
-            set_fk_check(sql_conn, enabled=True)
-            print("FKs validadas sin problemas.")
-        except Exception as ex:
-            sql_conn.rollback()
-            print(f"Alguna FK no se pudo revalidar: {ex}")
     finally:
         access_conn.close()
         sql_conn.close()

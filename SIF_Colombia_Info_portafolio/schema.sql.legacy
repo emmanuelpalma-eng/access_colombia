@@ -1,4 +1,12 @@
 /* ============================================================================
+   *** SUPERSEDIDO por Colombia/poc_colombia/schema/ ***
+   Este archivo queda solo como referencia historica de las decisiones
+   tomadas durante la migracion inicial de Info Portafolio (renombrado a
+   schema.sql.legacy). El esquema autoritativo vigente vive en
+   poc_colombia/schema/01, 04 y 05 (tbl_Niveles, tbl_Tiempos, tbl_Cuentas,
+   tbl_Centros, tbl_Valores, etc. ahora son compartidos entre las 6 fuentes,
+   no exclusivos de Info Portafolio).
+
    Script de creación de tablas - Info portafolio.accdb
    Esquema extraído y validado directamente contra el .accdb real (conteos de
    filas, unicidad de PK candidatas y huérfanos de FK verificados antes de
@@ -39,8 +47,16 @@
         - Cod_Centro -> tbl_Centros: no es posible una FK real porque
           tbl_Centros no tiene una llave (Cod_Nivel, Cod_Centro) 100% única
           (ver punto 5). Se deja índice, no FK.
+   7. tbl_Fechas NO se crea aquí: es la misma dimensión de calendario (misma
+      estructura y mismas 219 filas) que ya crea y carga el proyecto
+      SIF_Colombia_351 en esta misma base de datos (poc_colombia). Corre
+      SIF_Colombia_351/schema.sql (y su import) primero. tbl_Valores.Fecha
+      no tiene FK hacia tbl_Fechas (ver punto 6), así que este proyecto solo
+      la necesita como referencia de lectura para reportes, no para cargar
+      datos.
 
-   Ejecutar sobre una base de datos ya existente (no crea la BD).
+   Ejecutar sobre una base de datos ya existente que ya tenga tbl_Fechas
+   (creada por SIF_Colombia_351/schema.sql). No crea la BD.
 ============================================================================ */
 
 SET ANSI_NULLS ON;
@@ -48,31 +64,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 /* ============================================================
-   1. tbl_Fechas  (dimensión de tiempo -- fechas de fin de mes)
-   ============================================================ */
-CREATE TABLE [dbo].[tbl_Fechas] (
-    [Mes]                       DATETIME2(0)    NOT NULL,
-    [Num_Mes]                   INT             NULL,
-    [Mes_Reporte]               INT             NULL,
-    [Mostrar_Vista_Años]        INT             NULL,
-    [Mostrar_Vista_Histórica]   INT             NULL,
-    [Mostrar]                   INT             NULL,
-    [LTM]                       INT             NULL,
-    [YTD]                       INT             NULL,
-    [Nom_Mes]                   NVARCHAR(255)   NULL,
-    [Año]                       INT             NULL,
-    [Trimestre]                 NVARCHAR(255)   NULL,
-    [Mes_12M]                   DATETIME2(0)    NULL,
-    [Mes_YTD]                   DATETIME2(0)    NULL,
-    [Mes_TIR]                   DATETIME2(0)    NULL,
-    [Año_Seguros]               DATETIME2(0)    NULL,
-    [Año_Otras cuentas]         DATETIME2(0)    NULL,
-    CONSTRAINT [PK_tbl_Fechas] PRIMARY KEY CLUSTERED ([Mes])
-);
-GO
-
-/* ============================================================
-   2. tbl_Niveles  (niveles de la jerarquía de tbl_Centros)
+   1. tbl_Niveles  (niveles de la jerarquía de tbl_Centros)
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Niveles] (
     [Cod_Nivel]     INT             NOT NULL,
@@ -82,7 +74,7 @@ CREATE TABLE [dbo].[tbl_Niveles] (
 GO
 
 /* ============================================================
-   3. tbl_Tiempos  (tipo de periodo: Mes / LTM / Acumulado año)
+   2. tbl_Tiempos  (tipo de periodo: Mes / LTM / Acumulado año)
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Tiempos] (
     [Cod_Tiempo]    INT             NOT NULL,
@@ -92,7 +84,7 @@ CREATE TABLE [dbo].[tbl_Tiempos] (
 GO
 
 /* ============================================================
-   4. tbl_Cuentas  (catálogo de cuentas de gestión de portafolio)
+   3. tbl_Cuentas  (catálogo de cuentas de gestión de portafolio)
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Cuentas] (
     [Cod_Cuenta]        INT             NOT NULL,
@@ -115,7 +107,7 @@ CREATE TABLE [dbo].[tbl_Cuentas] (
 GO
 
 /* ============================================================
-   5. tbl_Totales  (definición de subtotales por nivel)
+   4. tbl_Totales  (definición de subtotales por nivel)
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Totales] (
     [Cod_Nivel]     INT             NOT NULL,
@@ -130,7 +122,7 @@ CREATE TABLE [dbo].[tbl_Totales] (
 GO
 
 /* ============================================================
-   6. tbl_Centros  (jerarquía/rollup -- ver supuesto 5, PK subrogado)
+   5. tbl_Centros  (jerarquía/rollup -- ver supuesto 5, PK subrogado)
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Centros] (
     [Id]                INT             IDENTITY(1,1) NOT NULL,
@@ -156,7 +148,7 @@ CREATE NONCLUSTERED INDEX [IX_tbl_Centros_Cod_Nivel_Cod_Centro] ON [dbo].[tbl_Ce
 GO
 
 /* ============================================================
-   7. tbl_Valores  (tabla de hechos, ~4.18M filas -- ver supuesto 6)
+   6. tbl_Valores  (tabla de hechos, ~4.18M filas -- ver supuesto 6)
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Valores] (
     [Fecha]         DATETIME2(0)    NOT NULL,
