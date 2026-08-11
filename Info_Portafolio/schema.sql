@@ -1,0 +1,180 @@
+/* ============================================================================
+   Script de creación de tablas - Info portafolio.accdb
+   Esquema extraído y validado directamente contra el .accdb real (conteos de
+   filas, unicidad de PK candidatas y huérfanos de FK verificados antes de
+   escribir este script -- no hubo diagrama ERD para esta base).
+
+   SUPUESTOS Y DECISIONES DE MIGRACIÓN (Access -> SQL Server):
+   -----------------------------------------------------------------------------
+   1. Texto: VARCHAR(n) de Access -> NVARCHAR(n) en SQL Server (acentos/ñ).
+      Los tamaños se ajustaron a la longitud real de los datos donde el
+      original de Access era un genérico VARCHAR(255) (Cod_Centro, Cod_Total)
+      -- evita el warning de más de 900 bytes en índices/PK compuestas.
+   2. Fechas: DATETIME de Access -> DATETIME2(0).
+   3. Campos DOUBLE que son medidas (Valor, Divisor) -> DECIMAL(18,4) o FLOAT
+      según corresponda. Códigos DOUBLE (Cod_Fondo) -> DECIMAL(18,0).
+   4. tbl_Tiempos NO es una dimensión de fecha: Cod_Tiempo es un tipo de
+      periodo (1=Mes, 2=Últimos 12 meses, 3=Acumulado año). Cada Fecha en
+      tbl_Valores puede repetirse hasta 3 veces, una por cada Cod_Tiempo.
+   5. tbl_Centros es una tabla de JERARQUÍA/rollup: el mismo Cod_Centro se
+      reutiliza en cada Cod_Nivel (arrendatario, centro comercial, ciudad,
+      sector, grupo económico, etc. son todos "niveles" distintos que
+      comparten el mismo código). (Cod_Nivel, Cod_Centro) es único en 1589 de
+      1597 filas -- quedan 8 pares con dos filas reales (ej. mismo local con
+      un arrendatario real Y una fila "VACANTE" al mismo tiempo). Por eso se
+      usa un PK subrogado (IDENTITY) en vez de forzar una PK natural que
+      perdería esas 8 filas legítimas. Se deja un índice no único en
+      (Cod_Nivel, Cod_Centro) para las consultas.
+   6. tbl_Valores (~4.18M filas) es la tabla de hechos, sin PK (como
+      tbl_EEFF en el proyecto SIF_Colombia_351). FKs evaluadas:
+        - Cod_Nivel  -> tbl_Niveles: 0 huérfanos. FK real.
+        - Cod_Tiempo -> tbl_Tiempos: 0 huérfanos. FK real.
+        - Cod_Cuenta -> tbl_Cuentas: 1 huérfano (Cod_Cuenta=0, fila
+          placeholder) -- se filtra al importar, luego FK real.
+        - Fecha -> tbl_Fechas: 791 de 4.18M filas (0.02%) tienen fechas
+          sueltas que no coinciden con ningún fin de mes de tbl_Fechas (ej.
+          2008-11-05, 2009-01-02) -- no son basura obvia como "0", así que
+          NO se fuerza esta FK (se deja solo un índice) para no perder esas
+          filas reales.
+        - Cod_Centro -> tbl_Centros: no es posible una FK real porque
+          tbl_Centros no tiene una llave (Cod_Nivel, Cod_Centro) 100% única
+          (ver punto 5). Se deja índice, no FK.
+
+   Ejecutar sobre una base de datos ya existente (no crea la BD).
+============================================================================ */
+
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
+/* ============================================================
+   1. tbl_Fechas  (dimensión de tiempo -- fechas de fin de mes)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Fechas] (
+    [Mes]                       DATETIME2(0)    NOT NULL,
+    [Num_Mes]                   INT             NULL,
+    [Mes_Reporte]               INT             NULL,
+    [Mostrar_Vista_Años]        INT             NULL,
+    [Mostrar_Vista_Histórica]   INT             NULL,
+    [Mostrar]                   INT             NULL,
+    [LTM]                       INT             NULL,
+    [YTD]                       INT             NULL,
+    [Nom_Mes]                   NVARCHAR(255)   NULL,
+    [Año]                       INT             NULL,
+    [Trimestre]                 NVARCHAR(255)   NULL,
+    [Mes_12M]                   DATETIME2(0)    NULL,
+    [Mes_YTD]                   DATETIME2(0)    NULL,
+    [Mes_TIR]                   DATETIME2(0)    NULL,
+    [Año_Seguros]               DATETIME2(0)    NULL,
+    [Año_Otras cuentas]         DATETIME2(0)    NULL,
+    CONSTRAINT [PK_tbl_Fechas] PRIMARY KEY CLUSTERED ([Mes])
+);
+GO
+
+/* ============================================================
+   2. tbl_Niveles  (niveles de la jerarquía de tbl_Centros)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Niveles] (
+    [Cod_Nivel]     INT             NOT NULL,
+    [Nom_Nivel]     NVARCHAR(255)   NULL,
+    CONSTRAINT [PK_tbl_Niveles] PRIMARY KEY CLUSTERED ([Cod_Nivel])
+);
+GO
+
+/* ============================================================
+   3. tbl_Tiempos  (tipo de periodo: Mes / LTM / Acumulado año)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Tiempos] (
+    [Cod_Tiempo]    INT             NOT NULL,
+    [Nom_Tiempo]    NVARCHAR(255)   NULL,
+    CONSTRAINT [PK_tbl_Tiempos] PRIMARY KEY CLUSTERED ([Cod_Tiempo])
+);
+GO
+
+/* ============================================================
+   4. tbl_Cuentas  (catálogo de cuentas de gestión de portafolio)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Cuentas] (
+    [Cod_Cuenta]        INT             NOT NULL,
+    [Cuenta]            NVARCHAR(255)   NULL,
+    [Signo]             INT             NULL,
+    [Agrupación]        NVARCHAR(255)   NULL,
+    [Agrup_Gastos]      INT             NULL,
+    [Cálculo]           INT             NULL,
+    [Por inmueble]      INT             NULL,
+    [Divisor]           FLOAT           NULL,
+    [Suma]              INT             NULL,
+    [Unidades]          INT             NULL,
+    [Ranking_Inm]       INT             NULL,
+    [Mostrar_pie]       INT             NULL,
+    [Dispers_EjeX]      INT             NULL,
+    [Dispers_EjeY]      INT             NULL,
+    [Dispers_Burb]      INT             NULL,
+    CONSTRAINT [PK_tbl_Cuentas] PRIMARY KEY CLUSTERED ([Cod_Cuenta])
+);
+GO
+
+/* ============================================================
+   5. tbl_Totales  (definición de subtotales por nivel)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Totales] (
+    [Cod_Nivel]     INT             NOT NULL,
+    [Cod_Total]     NVARCHAR(10)    NOT NULL,
+    [Nom_Total]     NVARCHAR(255)   NULL,
+    [Cruce1]        NVARCHAR(255)   NULL,
+    [Cruce2]        NVARCHAR(255)   NULL,
+    CONSTRAINT [PK_tbl_Totales] PRIMARY KEY CLUSTERED ([Cod_Nivel], [Cod_Total]),
+    CONSTRAINT [FK_tbl_Totales_tbl_Niveles]
+        FOREIGN KEY ([Cod_Nivel]) REFERENCES [dbo].[tbl_Niveles]([Cod_Nivel])
+);
+GO
+
+/* ============================================================
+   6. tbl_Centros  (jerarquía/rollup -- ver supuesto 5, PK subrogado)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Centros] (
+    [Id]                INT             IDENTITY(1,1) NOT NULL,
+    [Cod_Nivel]         INT             NOT NULL,
+    [Cod_Fondo]         DECIMAL(18,0)   NULL,
+    [Cod_Centro]        NVARCHAR(20)    NOT NULL,
+    [Nombre]            NVARCHAR(255)   NULL,
+    [Tipologia]         NVARCHAR(255)   NULL,
+    [Subtipologia]      NVARCHAR(255)   NULL,
+    [Ubicacion]         NVARCHAR(255)   NULL,
+    [Inmueble]          NVARCHAR(255)   NULL,
+    [Arrendatario]      NVARCHAR(255)   NULL,
+    [GRUPO_ECON]        NVARCHAR(255)   NULL,
+    [Sector_Arrend]     NVARCHAR(255)   NULL,
+    [Riesgo]            NVARCHAR(255)   NULL,
+    [VENC_YR]           INT             NULL,
+    CONSTRAINT [PK_tbl_Centros] PRIMARY KEY CLUSTERED ([Id]),
+    CONSTRAINT [FK_tbl_Centros_tbl_Niveles]
+        FOREIGN KEY ([Cod_Nivel]) REFERENCES [dbo].[tbl_Niveles]([Cod_Nivel])
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_Centros_Cod_Nivel_Cod_Centro] ON [dbo].[tbl_Centros]([Cod_Nivel], [Cod_Centro]);
+GO
+
+/* ============================================================
+   7. tbl_Valores  (tabla de hechos, ~4.18M filas -- ver supuesto 6)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Valores] (
+    [Fecha]         DATETIME2(0)    NOT NULL,
+    [Cod_Tiempo]    INT             NOT NULL,
+    [Cod_Fondo]     INT             NULL,
+    [Cod_Nivel]     INT             NOT NULL,
+    [Cod_Centro]    NVARCHAR(20)    NULL,
+    [Cod_Cuenta]    INT             NOT NULL,
+    [Valor]         DECIMAL(18,4)   NULL,
+    CONSTRAINT [FK_tbl_Valores_tbl_Niveles]
+        FOREIGN KEY ([Cod_Nivel]) REFERENCES [dbo].[tbl_Niveles]([Cod_Nivel]),
+    CONSTRAINT [FK_tbl_Valores_tbl_Tiempos]
+        FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
+    CONSTRAINT [FK_tbl_Valores_tbl_Cuentas]
+        FOREIGN KEY ([Cod_Cuenta]) REFERENCES [dbo].[tbl_Cuentas]([Cod_Cuenta])
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_Valores_Fecha] ON [dbo].[tbl_Valores]([Fecha]);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_Valores_Cod_Nivel_Cod_Centro] ON [dbo].[tbl_Valores]([Cod_Nivel], [Cod_Centro]);
+GO
