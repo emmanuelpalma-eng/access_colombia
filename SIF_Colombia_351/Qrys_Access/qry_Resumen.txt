@@ -1,0 +1,27 @@
+TRANSFORM Sum(qry_union_Valores_xContrato.VALOR) AS SumaDeVALOR
+SELECT
+    qry_union_Valores_xContrato.DESCR,
+    tbl_Contratos.COD_CTR,
+    tbl_Contratos.COD_INM,
+    tbl_Contratos.DET_INM,
+    tbl_Contratos.GLA
+FROM
+    qry_union_Valores_xContrato
+    INNER JOIN tbl_Contratos ON (
+        qry_union_Valores_xContrato.Fecha = tbl_Contratos.FECHA
+    )
+    AND (
+        qry_union_Valores_xContrato.COD_CTR = tbl_Contratos.COD_CTR
+    )
+WHERE
+    (
+        (
+            (qry_union_Valores_xContrato.Fecha) > #12 / 31 / 2023 #
+        )
+    )
+GROUP BY
+    qry_union_Valores_xContrato.DESCR,
+    tbl_Contratos.COD_CTR,
+    tbl_Contratos.COD_INM,
+    tbl_Contratos.DET_INM,
+    tbl_Contratos.GLA PIVOT qry_union_Valores_xContrato.Fecha;

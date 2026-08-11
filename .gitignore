@@ -1,0 +1,6 @@
+# Bases de datos Access: pesan cientos de MB y contienen datos reales,
+# no deben versionarse en git. OneDrive ya las sincroniza.
+Bases_Colombia/
+
+__pycache__/
+*.pyc

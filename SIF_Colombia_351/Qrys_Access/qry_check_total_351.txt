@@ -1,0 +1,9 @@
+SELECT
+    F351.FECHA,
+    IIf([matrícula] = "0", "DF", "PI") AS PA,
+    Sum(F351.[Vr mercado o valor presente en $]) AS VALOR
+FROM
+    F351
+GROUP BY
+    F351.FECHA,
+    IIf([matrícula] = "0", "DF", "PI");

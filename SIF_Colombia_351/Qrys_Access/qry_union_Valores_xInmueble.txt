@@ -1,0 +1,53 @@
+SELECT
+    "351 " & IIf([matrícula] = "0", "DF", "PI") AS DESCR,
+    F351.FECHA,
+    tbl_Cruce351.Cod_Inm,
+    1800 AS COD_CTA,
+    Sum(Round([Vr mercado o valor presente en $], 0)) AS VALOR
+FROM
+    F351
+    INNER JOIN tbl_Cruce351 ON F351.INMUEBLE = tbl_Cruce351.Descripción351
+GROUP BY
+    "351 " & IIf([matrícula] = "0", "DF", "PI"),
+    F351.FECHA,
+    tbl_Cruce351.Cod_Inm,
+    1800;
+
+UNION
+SELECT
+    "Central Point E1" AS DESCR,
+    VL_CentralPoint.FECHA,
+    235 AS COD_INM,
+    1800 AS COD_CTA,
+    VL_CentralPoint.VLR_FINAL_E1 AS VALOR
+FROM
+    VL_CentralPoint
+WHERE
+    (((VL_CentralPoint.FECHA) > #12 / 31 / 2023 #));
+
+UNION
+SELECT
+    "Central Point E2" AS DESCR,
+    VL_CentralPoint.FECHA,
+    259 AS COD_INM,
+    1800 AS COD_CTA,
+    VL_CentralPoint.VLR_FINAL_E2 AS VALOR
+FROM
+    VL_CentralPoint
+WHERE
+    (((VL_CentralPoint.FECHA) > #12 / 31 / 2023 #));
+
+UNION
+SELECT
+    "Disp Xa Venta" AS DESCR,
+    VL_Disp_xa_Venta.FECHA,
+    VL_Disp_xa_Venta.COD_INM,
+    1800 AS COD_CTA,
+    Sum(VL_Disp_xa_Venta.VALOR) AS VALOR
+FROM
+    VL_Disp_xa_Venta
+GROUP BY
+    "Disp Xa Venta",
+    VL_Disp_xa_Venta.FECHA,
+    VL_Disp_xa_Venta.COD_INM,
+    1800;

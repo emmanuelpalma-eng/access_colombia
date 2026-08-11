@@ -1,0 +1,28 @@
+SELECT
+    qry_union_Valores_xContrato.DESCR,
+    tbl_Contratos.FECHA,
+    tbl_Contratos.COD_CTR,
+    tbl_Contratos.COD_INM,
+    tbl_Contratos.DET_INM,
+    tbl_Contratos.NOM_ARREND,
+    tbl_Contratos.GLA,
+    tbl_Contratos.Tipologia,
+    qry_union_Valores_xContrato.VALOR
+FROM
+    qry_union_Valores_xContrato
+    INNER JOIN tbl_Contratos ON (
+        qry_union_Valores_xContrato.COD_CTR = tbl_Contratos.COD_CTR
+    )
+    AND (
+        qry_union_Valores_xContrato.Fecha = tbl_Contratos.FECHA
+    )
+GROUP BY
+    qry_union_Valores_xContrato.DESCR,
+    tbl_Contratos.FECHA,
+    tbl_Contratos.COD_CTR,
+    tbl_Contratos.COD_INM,
+    tbl_Contratos.DET_INM,
+    tbl_Contratos.NOM_ARREND,
+    tbl_Contratos.GLA,
+    tbl_Contratos.Tipologia,
+    qry_union_Valores_xContrato.VALOR;

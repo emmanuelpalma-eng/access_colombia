@@ -1,0 +1,325 @@
+/* ============================================================================
+   Script de creación de tablas - SIF Colombia - Informes FIC - 351
+   Generado a partir del ERD (Lucidchart) de "SIF Colombia - Informes FIC - 351.accdb"
+   y ajustado contra los datos reales del .accdb (ver decisiones abajo).
+
+   SUPUESTOS Y DECISIONES DE MIGRACIÓN (Access -> SQL Server):
+   -----------------------------------------------------------------------------
+   1. Texto: VARCHAR(n) de Access -> NVARCHAR(n) en SQL Server, por los
+      caracteres acentuados/ñ presentes en nombres y datos (Descripción,
+      matrícula, Año, etc.).
+   2. Fechas: DATETIME de Access -> DATETIME2(0) (sin fracción de segundo,
+      suficiente para fechas mensuales de reporte).
+   3. Campos DOUBLE que son códigos/identificadores (Cod_Inm, COD_CTA,
+      Cod_Fondo, NIT_Tercero, etc.) -> DECIMAL(18,0), para evitar los
+      problemas de comparación por igualdad propios de FLOAT en llaves
+      primarias/foráneas.
+   4. Campos DOUBLE que son valores/medidas (VALOR, SALDO, MVA, VLR_*, etc.)
+      -> DECIMAL(18,4). Latitud/Longitud se dejan en FLOAT (uso geográfico).
+   5. Campos CURRENCY de Access -> DECIMAL(19,4) (equivalente exacto, sin
+      redondeo de punto flotante).
+   6. tbl_Inmuebles: PK compuesta (Fecha, Cod_Inm) -- es una foto mensual de
+      propiedades (9,158 filas), no una tabla de propiedades únicas.
+      tbl_Contratos: PK compuesta (FECHA, COD_CTR, ESTADO) -- se confirmó con
+      datos reales que un mismo COD_CTR puede tener una fila VIGENTE y otra
+      RESTITUIDO en el mismo mes; ESTADO nunca es NULL y con las 3 columnas
+      no quedan duplicados.
+   7. FKs que se evaluaron y NO se pudieron sostener con datos reales (se
+      documentan aquí en vez de forzarlas, para no perder filas válidas):
+        - tbl_Cruce351 -> tbl_Inmuebles: no tiene columna Fecha propia y
+          tbl_Inmuebles ya no tiene a Cod_Inm como llave única por sí sola.
+          Se deja solo un índice sobre Cod_Inm.
+        - tbl_ValorLibros_xInmueble.COD_CTA -> tbl_Cuentas_EEFF: COD_CTA vale
+          1800 en el 100% de las filas y ese código nunca existe en el
+          catálogo de cuentas. Se deja índice, no FK.
+        - tbl_Contratos -> tbl_Inmuebles: tbl_Inmuebles solo cubre fotos
+          desde 2024-01, pero tbl_Contratos tiene historial desde 2008-10
+          (85% de las filas quedan fuera del rango). Diferencia real de
+          profundidad histórica, no datos sucios. Se deja índice, no FK.
+        - tbl_EEFF.COD_CTA -> tbl_Cuentas_EEFF: 19 de 192,197 filas usan
+          cuentas auxiliares (ej. 161405001006) que no están en el catálogo
+          resumen de 720 cuentas. Se deja índice, no FK.
+   8. Columna "######" en F351: encabezado corrupto/ilegible en el origen.
+      Se renombró a [Campo13] siguiendo la convención Campo11/12/14 de la
+      misma tabla.
+   9. F351.[Fecha emisión] viene tipada como DOUBLE en el origen a pesar del
+      nombre (posible fecha serial de Access). Se dejó como FLOAT.
+   10. Filas basura/placeholder detectadas en datos reales se filtran al
+       importar (no se modeló el esquema para admitirlas) -- ver import.py:
+       tbl_Cruce_SIF (Cod_Cta=0), VL_CentralPoint (filas 100% NULL),
+       tbl_ValorLibros_xInmueble (Cod_Inm 0, 5000 y 997).
+
+   Ejecutar sobre una base de datos ya existente (no crea la BD). Es
+   idempotente en el sentido de "correr una vez" -- no reintentar sobre una
+   base donde las tablas ya existen (fallará con "objeto ya existe").
+============================================================================ */
+
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
+/* ============================================================
+   1. tbl_Fechas  (dimensión de tiempo)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Fechas] (
+    [Mes]                       DATETIME2(0)    NOT NULL,
+    [Num_Mes]                   INT             NULL,
+    [Mes_Reporte]               INT             NULL,
+    [Mostrar_Vista_Años]        INT             NULL,
+    [Mostrar_Vista_Histórica]   INT             NULL,
+    [Mostrar]                   INT             NULL,
+    [LTM]                       INT             NULL,
+    [YTD]                       INT             NULL,
+    [Nom_Mes]                   NVARCHAR(255)   NULL,
+    [Año]                       INT             NULL,
+    [Trimestre]                 NVARCHAR(255)   NULL,
+    [Mes_12M]                   DATETIME2(0)    NULL,
+    [Mes_YTD]                   DATETIME2(0)    NULL,
+    [Mes_TIR]                   DATETIME2(0)    NULL,
+    [Año_Seguros]               DATETIME2(0)    NULL,
+    [Año_Otras cuentas]         DATETIME2(0)    NULL,
+    CONSTRAINT [PK_tbl_Fechas] PRIMARY KEY CLUSTERED ([Mes])
+);
+GO
+
+/* ============================================================
+   2. tbl_Cuentas_EEFF  (dimensión de cuentas contables)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Cuentas_EEFF] (
+    [COD_CTA]           DECIMAL(18,0)   NOT NULL,
+    [NOM_CTA]           NVARCHAR(255)   NULL,
+    [SIGNO_CTA]         INT             NULL,
+    [SIGNO_REPORTE]     INT             NULL,
+    [TIPO_CTA]          INT             NULL,
+    [SUMA]              INT             NULL,
+    [Clasif_Contable]   NVARCHAR(255)   NULL,
+    [COD_AGRUP]         NVARCHAR(255)   NULL,
+    [NOM_AGRUP]         NVARCHAR(255)   NULL,
+    [Cod_Nivel1]        NVARCHAR(255)   NULL,
+    [Nom_Nivel1]        NVARCHAR(255)   NULL,
+    [Cod_Nivel2]        NVARCHAR(255)   NULL,
+    [Nom_Nivel2]        NVARCHAR(255)   NULL,
+    [Cod_Nivel3]        NVARCHAR(255)   NULL,
+    [Nom_Nivel3]        NVARCHAR(255)   NULL,
+    [Cod_Nivel4]        NVARCHAR(255)   NULL,
+    [Nom_Nivel4]        NVARCHAR(255)   NULL,
+    [Cod_Nivel5]        NVARCHAR(255)   NULL,
+    [Nom_Nivel5]        NVARCHAR(255)   NULL,
+    [Cod_Nivel3A]       NVARCHAR(255)   NULL,
+    [Nom_Nivel3A]       NVARCHAR(255)   NULL,
+    [Cod_Nivel4A]       NVARCHAR(255)   NULL,
+    [Nom_Nivel4A]       NVARCHAR(255)   NULL,
+    [Cod_Nivel5A]       NVARCHAR(255)   NULL,
+    [Nom_Nivel5A]       NVARCHAR(255)   NULL,
+    CONSTRAINT [PK_tbl_Cuentas_EEFF] PRIMARY KEY CLUSTERED ([COD_CTA])
+);
+GO
+
+/* ============================================================
+   3. tbl_Usuarios
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Usuarios] (
+    [Usuario]   NVARCHAR(255)   NOT NULL,
+    CONSTRAINT [PK_tbl_Usuarios] PRIMARY KEY CLUSTERED ([Usuario])
+);
+GO
+
+/* ============================================================
+   4. tbl_Inmuebles  (histórico mensual de propiedades)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Inmuebles] (
+    [Fecha]                 DATETIME2(0)    NOT NULL,
+    [Cod_Fondo]             DECIMAL(18,0)   NULL,
+    [Cod_Inm]               DECIMAL(18,0)   NOT NULL,
+    [Cod_Inm_Nue]           DECIMAL(18,0)   NULL,
+    [Cod_Inm1]              DECIMAL(18,0)   NULL,
+    [Cod_Inm1_Nue]          DECIMAL(18,0)   NULL,
+    [Nom_Inm]               NVARCHAR(255)   NULL,
+    [Ubicacion]             NVARCHAR(255)   NULL,
+    [Ubic_Pol_Inv]          NVARCHAR(255)   NULL,
+    [Direccion]             NVARCHAR(255)   NULL,
+    [Tipologia]             NVARCHAR(255)   NULL,
+    [Tipologia_Cons]        NVARCHAR(255)   NULL,
+    [Subtipologia]          NVARCHAR(255)   NULL,
+    [Estado]                NVARCHAR(255)   NULL,
+    [Tipo_Riesgo]           NVARCHAR(255)   NULL,
+    [Georef]                NVARCHAR(255)   NULL,
+    [Coordenadas]           NVARCHAR(255)   NULL,
+    [Latitud]               FLOAT           NULL,
+    [Longitud]              FLOAT           NULL,
+    [Titularidad]           NVARCHAR(255)   NULL,
+    [Subtipologia3]         NVARCHAR(255)   NULL,
+    [Certificacion]         NVARCHAR(255)   NULL,
+    [Año_de_contruccion]    NVARCHAR(255)   NULL,
+    [Conteo]                NVARCHAR(255)   NULL,
+    CONSTRAINT [PK_tbl_Inmuebles] PRIMARY KEY CLUSTERED ([Fecha], [Cod_Inm]),
+    CONSTRAINT [FK_tbl_Inmuebles_tbl_Fechas]
+        FOREIGN KEY ([Fecha]) REFERENCES [dbo].[tbl_Fechas]([Mes])
+);
+GO
+
+/* ============================================================
+   5. tbl_Cruce_SIF
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Cruce_SIF] (
+    [Cod_Cta]       DECIMAL(18,0)   NOT NULL,
+    [Nom_Cta]       NVARCHAR(255)   NULL,
+    [Grupo_Cuenta]  NVARCHAR(255)   NULL,
+    [NIT_Tercero]   DECIMAL(18,0)   NULL,
+    [Nom_Tercero]   NVARCHAR(255)   NULL,
+    [Cod_SIF]       NVARCHAR(255)   NULL,
+    [Nom_SIF]       NVARCHAR(255)   NULL,
+    CONSTRAINT [FK_tbl_Cruce_SIF_tbl_Cuentas_EEFF]
+        FOREIGN KEY ([Cod_Cta]) REFERENCES [dbo].[tbl_Cuentas_EEFF]([COD_CTA])
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_Cruce_SIF_Cod_Cta] ON [dbo].[tbl_Cruce_SIF]([Cod_Cta]);
+GO
+
+/* ============================================================
+   6. tbl_Cruce351  (sin FK real hacia tbl_Inmuebles -- ver supuesto 7)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Cruce351] (
+    [COD_ASIGN_FIDU]    DECIMAL(18,0)   NULL,
+    [Descripción351]    NVARCHAR(100)   NULL,
+    [Cod_Inm]           DECIMAL(18,0)   NULL
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_Cruce351_Cod_Inm] ON [dbo].[tbl_Cruce351]([Cod_Inm]);
+GO
+
+/* ============================================================
+   7. tbl_Valores_Valor_Libros
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Valores_Valor_Libros] (
+    [Fecha]         DATETIME2(0)    NOT NULL,
+    [Cod_Tiempo]    INT             NULL,
+    [Cod_Nivel]     INT             NULL,
+    [Cod_Centro]    NVARCHAR(255)   NULL,
+    [Cod_Cuenta]    INT             NULL,
+    [Valor]         DECIMAL(18,4)   NULL,
+    CONSTRAINT [FK_tbl_Valores_Valor_Libros_tbl_Fechas]
+        FOREIGN KEY ([Fecha]) REFERENCES [dbo].[tbl_Fechas]([Mes])
+);
+GO
+
+/* ============================================================
+   8. VL_Disp_xa_Venta
+   ============================================================ */
+CREATE TABLE [dbo].[VL_Disp_xa_Venta] (
+    [FECHA]         DATETIME2(0)    NOT NULL,
+    [COD_INM]       DECIMAL(18,0)   NOT NULL,
+    [DESCR_INM]     NVARCHAR(255)   NULL,
+    [VALOR]         DECIMAL(18,4)   NULL,
+    CONSTRAINT [FK_VL_Disp_xa_Venta_tbl_Inmuebles]
+        FOREIGN KEY ([FECHA], [COD_INM]) REFERENCES [dbo].[tbl_Inmuebles]([Fecha], [Cod_Inm])
+);
+GO
+
+/* ============================================================
+   9. tbl_ValorLibros_xInmueble  (sin FK de COD_CTA -- ver supuesto 7)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_ValorLibros_xInmueble] (
+    [DESCR]     NVARCHAR(255)   NULL,
+    [FECHA]     DATETIME2(0)    NOT NULL,
+    [Cod_Inm]   DECIMAL(18,0)   NOT NULL,
+    [COD_CTA]   DECIMAL(18,0)   NOT NULL,
+    [VALOR]     DECIMAL(18,4)   NULL,
+    CONSTRAINT [FK_tbl_ValorLibros_xInmueble_tbl_Inmuebles]
+        FOREIGN KEY ([FECHA], [Cod_Inm]) REFERENCES [dbo].[tbl_Inmuebles]([Fecha], [Cod_Inm])
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_ValorLibros_xInmueble_COD_CTA] ON [dbo].[tbl_ValorLibros_xInmueble]([COD_CTA]);
+GO
+
+/* ============================================================
+   10. VL_CentralPoint
+   ============================================================ */
+CREATE TABLE [dbo].[VL_CentralPoint] (
+    [FECHA]             DATETIME2(0)    NOT NULL,
+    [VLR_FINAL_E1]      DECIMAL(18,4)   NULL,
+    [VLR_FINAL_E2]      DECIMAL(18,4)   NULL,
+    [VLR_E1]            DECIMAL(18,4)   NULL,
+    [VLR_E2]            DECIMAL(18,4)   NULL,
+    [MVA]               DECIMAL(18,4)   NULL,
+    [TOTAL_ACTIVOS_PA]  DECIMAL(18,4)   NULL,
+    [PASIVO_PA]         DECIMAL(18,4)   NULL,
+    [ANT_DF]            DECIMAL(18,4)   NULL,
+    [TOTAL]             DECIMAL(18,4)   NULL,
+    [351]               DECIMAL(18,4)   NULL,
+    [DIF]               DECIMAL(18,4)   NULL,
+    [UVR_E1]            DECIMAL(18,4)   NULL,
+    [UVR_E2]            DECIMAL(18,4)   NULL,
+    [UVR_E1_#2]         DECIMAL(18,4)   NULL,
+    [UVR_E2_#2]         DECIMAL(18,4)   NULL,
+    [AVAL_E1]           DECIMAL(18,4)   NULL,
+    [AVAL_E2]           DECIMAL(18,4)   NULL,
+    [VLR_AVAL_E1]       DECIMAL(18,4)   NULL,
+    [VLR_AVAL_E2]       DECIMAL(18,4)   NULL,
+    CONSTRAINT [FK_VL_CentralPoint_tbl_Fechas]
+        FOREIGN KEY ([FECHA]) REFERENCES [dbo].[tbl_Fechas]([Mes])
+);
+GO
+
+/* ============================================================
+   11. tbl_Contratos  (sin FK hacia tbl_Inmuebles -- ver supuesto 7)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_Contratos] (
+    [FECHA]         DATETIME2(0)    NOT NULL,
+    [COD_FONDO]     INT             NULL,
+    [ESTADO]        NVARCHAR(30)    NOT NULL,
+    [COD_CTR]       NVARCHAR(20)    NOT NULL,
+    [NIT]           NVARCHAR(255)   NULL,
+    [NOM_ARREND]    NVARCHAR(255)   NULL,
+    [COD_INM]       DECIMAL(18,0)   NOT NULL,
+    [DET_INM]       NVARCHAR(255)   NULL,
+    [GLA]           DECIMAL(18,2)   NULL,
+    [Tipologia]     NVARCHAR(255)   NULL,
+    [Fec_Inicio]    DATETIME2(0)    NULL,
+    [Fec_Fin]       DATETIME2(0)    NULL,
+    [IncremCanon]   NVARCHAR(255)   NULL,
+    CONSTRAINT [PK_tbl_Contratos] PRIMARY KEY CLUSTERED ([FECHA], [COD_CTR], [ESTADO])
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_Contratos_FECHA_COD_INM] ON [dbo].[tbl_Contratos]([FECHA], [COD_INM]);
+GO
+
+/* ============================================================
+   12. tbl_EEFF  (sin FK hacia tbl_Cuentas_EEFF -- ver supuesto 7)
+   ============================================================ */
+CREATE TABLE [dbo].[tbl_EEFF] (
+    [FECHA]         DATETIME2(0)    NOT NULL,
+    [COD_FONDO]     INT             NULL,
+    [COD_CTA]       DECIMAL(18,0)   NOT NULL,
+    [NIT_TERCERO]   DECIMAL(18,0)   NULL,
+    [SALDO]         DECIMAL(18,4)   NULL,
+    CONSTRAINT [FK_tbl_EEFF_tbl_Fechas]
+        FOREIGN KEY ([FECHA]) REFERENCES [dbo].[tbl_Fechas]([Mes])
+);
+GO
+CREATE NONCLUSTERED INDEX [IX_tbl_EEFF_COD_CTA] ON [dbo].[tbl_EEFF]([COD_CTA]);
+GO
+
+/* ============================================================
+   13. F351  (ver supuestos 8 y 9)
+   ============================================================ */
+CREATE TABLE [dbo].[F351] (
+    [FECHA]                                     DATETIME2(0)    NOT NULL,
+    [INMUEBLE]                                  NVARCHAR(255)   NULL,
+    [matrícula]                                 NVARCHAR(255)   NULL,
+    [Unidad de Captura]                         DECIMAL(18,0)   NULL,
+    [No asignado por la entidad]                DECIMAL(18,0)   NULL,
+    [Fecha emisión]                             FLOAT           NULL,
+    [Valor nominal]                             DECIMAL(19,4)   NULL,
+    [Valor de compra moneda original]           DECIMAL(19,4)   NULL,
+    [Valor de compra en pesos]                  DECIMAL(19,4)   NULL,
+    [Vr mercado o valor presente en $]          DECIMAL(19,4)   NULL,
+    [Campo11]                                   NVARCHAR(255)   NULL,
+    [Campo12]                                   FLOAT           NULL,
+    [Campo13]                                   DECIMAL(19,4)   NULL,
+    [Campo14]                                   DECIMAL(19,4)   NULL,
+    [F15]                                       FLOAT           NULL,
+    CONSTRAINT [FK_F351_tbl_Fechas]
+        FOREIGN KEY ([FECHA]) REFERENCES [dbo].[tbl_Fechas]([Mes])
+);
+GO

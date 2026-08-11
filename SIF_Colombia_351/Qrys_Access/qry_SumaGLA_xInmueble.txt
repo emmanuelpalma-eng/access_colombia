@@ -1,0 +1,17 @@
+SELECT
+    tbl_Contratos.FECHA,
+    tbl_Inmuebles.Cod_Inm1 AS COD_INM,
+    Sum(tbl_Contratos.GLA) AS GLA,
+    tbl_Fechas.Mes_Reporte
+FROM
+    (
+        tbl_Contratos
+        INNER JOIN tbl_Inmuebles ON tbl_Contratos.COD_INM = tbl_Inmuebles.Cod_Inm
+    )
+    INNER JOIN tbl_Fechas ON tbl_Inmuebles.Fecha = tbl_Fechas.Mes
+GROUP BY
+    tbl_Contratos.FECHA,
+    tbl_Inmuebles.Cod_Inm1,
+    tbl_Fechas.Mes_Reporte
+HAVING
+    (((tbl_Fechas.Mes_Reporte) = 1));

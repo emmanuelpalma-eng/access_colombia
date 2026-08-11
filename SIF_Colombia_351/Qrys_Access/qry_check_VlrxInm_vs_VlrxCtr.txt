@@ -1,0 +1,14 @@
+SELECT
+    qry_check_det_valor_libros.FECHA,
+    qry_check_det_valor_libros.COD_CTR,
+    qry_check_det_valor_libros.VALOR
+FROM
+    qry_check_det_valor_libros
+    LEFT JOIN qry_union_Valores_xContrato ON (
+        qry_check_det_valor_libros.FECHA = qry_union_Valores_xContrato.Fecha
+    )
+    AND (
+        qry_check_det_valor_libros.COD_CTR = qry_union_Valores_xContrato.COD_CTR
+    )
+WHERE
+    (((qry_union_Valores_xContrato.COD_CTR) IS NULL));

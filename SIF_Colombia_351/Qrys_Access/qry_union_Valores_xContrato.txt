@@ -1,0 +1,45 @@
+SELECT qry_union_Valores_xInmueble.DESCR, qry_union_Valores_xInmueble.Fecha, tbl_Contratos.COD_CTR, Round([qry_union_Valores_xInmueble]![VALOR]*IIf([qry_SumaGLA_xInmueble]![GLA]=0,1,([tbl_Contratos]![GLA]/[qry_SumaGLA_xInmueble]![GLA])),0) AS VALOR
+FROM ((qry_union_Valores_xInmueble INNER JOIN tbl_Contratos ON qry_union_Valores_xInmueble.FECHA = tbl_Contratos.FECHA) INNER JOIN qry_SumaGLA_xInmueble ON tbl_Contratos.FECHA = qry_SumaGLA_xInmueble.FECHA) INNER JOIN tbl_Inmuebles ON (qry_union_Valores_xInmueble.Cod_Inm = tbl_Inmuebles.Cod_Inm1) AND (tbl_Contratos.COD_INM = tbl_Inmuebles.Cod_Inm) AND (qry_SumaGLA_xInmueble.COD_INM = tbl_Inmuebles.Cod_Inm1)
+GROUP BY qry_union_Valores_xInmueble.DESCR, qry_union_Valores_xInmueble.Fecha, tbl_Contratos.COD_CTR, Round([qry_union_Valores_xInmueble]![VALOR]*IIf([qry_SumaGLA_xInmueble]![GLA]=0,1,([tbl_Contratos]![GLA]/[qry_SumaGLA_xInmueble]![GLA])),0)
+HAVING (((qry_union_Valores_xInmueble.Fecha)>#12/31/2013#) AND ((Round([qry_union_Valores_xInmueble]![VALOR]*IIf([qry_SumaGLA_xInmueble]![GLA]=0,1,([tbl_Contratos]![GLA]/[qry_SumaGLA_xInmueble]![GLA])),0))<>0));
+
+
+UNION 
+SELECT "Inversiones en curso (SMArtín hasta Feb-24)" AS DESCR, tbl_EEFF.Fecha, tbl_Cruce_SIF.Cod_SIF AS COD_CTR, Sum(tbl_EEFF.Saldo) AS VALOR
+FROM tbl_Cruce_SIF INNER JOIN tbl_EEFF ON (tbl_Cruce_SIF.NIT_Tercero = tbl_EEFF.NIT_Tercero) AND (tbl_Cruce_SIF.Cod_Cta = tbl_EEFF.Cod_Cta)
+GROUP BY tbl_EEFF.Fecha, tbl_Cruce_SIF.Cod_SIF, IIf([tbl_Cruce_SIF]![NIT_TERCERO]=90020319112 And [FECHA]>#2/29/2024#,0,1)
+HAVING (((IIf([tbl_Cruce_SIF]![NIT_TERCERO]=90020319112 And [FECHA]>#2/29/2024#,0,1))=1));
+
+
+
+UNION 
+SELECT "351 PI" AS DESCR, tbl_EEFF.FECHA, "242a" AS COD_CTR, Sum(tbl_EEFF.Saldo) AS VALOR
+FROM tbl_Cuentas_EEFF INNER JOIN tbl_EEFF ON tbl_Cuentas_EEFF.Cod_Cta = tbl_EEFF.COD_Cta
+GROUP BY "351 PI", tbl_EEFF.FECHA, "242a", 1800, tbl_Cuentas_EEFF.COD_CTA, tbl_EEFF.NIT_TERCERO
+HAVING (((tbl_Cuentas_EEFF.COD_CTA)=182705003001) AND ((tbl_EEFF.NIT_TERCERO)=800109273 Or (tbl_EEFF.NIT_TERCERO)=900248211));
+
+UNION
+ SELECT
+    "Otros activos" AS DESCR,
+    tbl_EEFF.FECHA,
+    tbl_Cruce_SIF.Cod_SIF AS COD_CTR,
+    Sum(tbl_EEFF.Saldo) AS VALOR
+FROM
+    tbl_Cruce_SIF
+    INNER JOIN (
+        tbl_Cuentas_EEFF
+        INNER JOIN tbl_EEFF ON tbl_Cuentas_EEFF.Cod_Cta = tbl_EEFF.COD_Cta
+    ) ON tbl_Cruce_SIF.Grupo_Cuenta = tbl_Cuentas_EEFF.Nom_Nivel2
+GROUP BY
+    tbl_EEFF.FECHA,
+    tbl_Cruce_SIF.Cod_SIF,
+    "Inversiones en curso",
+    1800,
+    tbl_Cruce_SIF.Grupo_Cuenta
+HAVING
+    (((tbl_Cruce_SIF.Grupo_Cuenta) <> "INVERSIONES"));
+
+UNION SELECT "Inversiones en curso (SMArtín desde Feb-24)" AS DESCR, tbl_EEFF.Fecha, "146a" AS COD_CTR, Sum(tbl_EEFF.Saldo) AS VALOR
+FROM tbl_Cruce_SIF INNER JOIN tbl_EEFF ON (tbl_Cruce_SIF.Cod_Cta = tbl_EEFF.Cod_Cta) AND (tbl_Cruce_SIF.NIT_Tercero = tbl_EEFF.NIT_Tercero)
+GROUP BY tbl_EEFF.Fecha, "146c", IIf([tbl_Cruce_SIF]![NIT_TERCERO]=90020319112 And [FECHA]>#2/29/2024#,0,1)
+HAVING (((IIf([tbl_Cruce_SIF]![NIT_TERCERO]=90020319112 And [FECHA]>#2/29/2024#,0,1))=0));

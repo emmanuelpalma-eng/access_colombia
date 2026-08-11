@@ -1,0 +1,9 @@
+SELECT
+    F351.[No asignado por la entidad],
+    F351.INMUEBLE,
+    tbl_Cruce351.Cod_Inm
+FROM
+    F351
+    LEFT JOIN tbl_Cruce351 ON F351.INMUEBLE = tbl_Cruce351.Descripción351
+WHERE
+    (((tbl_Cruce351.Cod_Inm) IS NULL));
