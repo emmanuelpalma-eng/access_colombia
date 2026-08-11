@@ -67,8 +67,8 @@ BEGIN
 
     DECLARE @DestId INT = OBJECT_ID(@TablaDestino);
     DECLARE @StgId  INT = OBJECT_ID(@TablaStaging);
-    IF @DestId IS NULL THROW 50001, N'Tabla destino no existe', 1;
-    IF @StgId  IS NULL THROW 50002, N'Tabla staging no existe', 1;
+    IF @DestId IS NULL BEGIN THROW 50001, N'Tabla destino no existe', 1; END
+    IF @StgId  IS NULL BEGIN THROW 50002, N'Tabla staging no existe', 1; END
 
     DECLARE @FKs TABLE (ConstraintName SYSNAME, ChildSchema SYSNAME, ChildTable SYSNAME);
     INSERT INTO @FKs
@@ -153,13 +153,13 @@ BEGIN
 
     DECLARE @DestId INT = OBJECT_ID(@TablaDestino);
     DECLARE @StgId  INT = OBJECT_ID(@TablaStaging);
-    IF @DestId IS NULL THROW 50001, N'Tabla destino no existe', 1;
-    IF @StgId  IS NULL THROW 50002, N'Tabla staging no existe', 1;
+    IF @DestId IS NULL BEGIN THROW 50001, N'Tabla destino no existe', 1; END
+    IF @StgId  IS NULL BEGIN THROW 50002, N'Tabla staging no existe', 1; END
 
     DECLARE @FechaCol SYSNAME;
     SELECT @FechaCol = c.name FROM sys.columns c
     WHERE c.object_id = @DestId AND c.name IN (N'Fecha', N'FECHA');
-    IF @FechaCol IS NULL THROW 50003, N'No se encontro columna Fecha/FECHA en la tabla destino', 1;
+    IF @FechaCol IS NULL BEGIN THROW 50003, N'No se encontro columna Fecha/FECHA en la tabla destino', 1; END
 
     DECLARE @Sql NVARCHAR(MAX), @Filas INT = 0;
     DECLARE @Where NVARCHAR(300) = N'';

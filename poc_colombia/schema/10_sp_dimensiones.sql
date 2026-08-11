@@ -66,7 +66,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     UPDATE [dbo].[tbl_Niveles] SET [Nom_Nivel] = @Nom_Nivel WHERE [Cod_Nivel] = @Cod_Nivel;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Cod_Nivel no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Cod_Nivel no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Niveles', 'U', CAST(@Cod_Nivel AS NVARCHAR(400)));
 END
 GO
@@ -77,9 +77,9 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Refs INT;
     EXEC [app].[usp_Util_ContarReferencias] @Tabla = N'dbo.tbl_Niveles', @Columna = N'Cod_Nivel', @Valor = @Cod_Nivel, @Total = @Refs OUTPUT;
-    IF @Refs > 0 THROW 51002, N'No se puede eliminar: Cod_Nivel tiene tablas dependientes con FK (tbl_Centros/tbl_Totales/tbl_Valores*)', 1;
+    IF @Refs > 0 BEGIN THROW 51002, N'No se puede eliminar: Cod_Nivel tiene tablas dependientes con FK (tbl_Centros/tbl_Totales/tbl_Valores*)', 1; END
     DELETE FROM [dbo].[tbl_Niveles] WHERE [Cod_Nivel] = @Cod_Nivel;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Cod_Nivel no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Cod_Nivel no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Niveles', 'D', CAST(@Cod_Nivel AS NVARCHAR(400)));
 END
 GO
@@ -102,7 +102,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     UPDATE [dbo].[tbl_Tiempos] SET [Nom_Tiempo] = @Nom_Tiempo WHERE [Cod_Tiempo] = @Cod_Tiempo;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Cod_Tiempo no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Cod_Tiempo no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Tiempos', 'U', CAST(@Cod_Tiempo AS NVARCHAR(400)));
 END
 GO
@@ -113,9 +113,9 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Refs INT;
     EXEC [app].[usp_Util_ContarReferencias] @Tabla = N'dbo.tbl_Tiempos', @Columna = N'Cod_Tiempo', @Valor = @Cod_Tiempo, @Total = @Refs OUTPUT;
-    IF @Refs > 0 THROW 51002, N'No se puede eliminar: Cod_Tiempo tiene tablas dependientes con FK', 1;
+    IF @Refs > 0 BEGIN THROW 51002, N'No se puede eliminar: Cod_Tiempo tiene tablas dependientes con FK', 1; END
     DELETE FROM [dbo].[tbl_Tiempos] WHERE [Cod_Tiempo] = @Cod_Tiempo;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Cod_Tiempo no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Cod_Tiempo no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Tiempos', 'D', CAST(@Cod_Tiempo AS NVARCHAR(400)));
 END
 GO
@@ -146,7 +146,7 @@ BEGIN
         [COD_FONDO_FIDU] = @COD_FONDO_FIDU, [ABREV_FONDO] = @ABREV_FONDO, [NOM_CORTO_FONDO] = @NOM_CORTO_FONDO,
         [NOM_FONDO] = @NOM_FONDO, [FIDU] = @FIDU, [FONDO] = @FONDO
     WHERE [COD_FONDO] = @COD_FONDO;
-    IF @@ROWCOUNT = 0 THROW 51001, N'COD_FONDO no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'COD_FONDO no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Fondos', 'U', CAST(@COD_FONDO AS NVARCHAR(400)));
 END
 GO
@@ -157,9 +157,9 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Refs INT;
     EXEC [app].[usp_Util_ContarReferencias] @Tabla = N'dbo.tbl_Fondos', @Columna = N'COD_FONDO', @Valor = @COD_FONDO, @Total = @Refs OUTPUT;
-    IF @Refs > 0 THROW 51002, N'No se puede eliminar: COD_FONDO tiene tablas dependientes con FK (tbl_Centros/tbl_Inmuebles/tbl_Contratos/tbl_EEFF/tbl_Valores*)', 1;
+    IF @Refs > 0 BEGIN THROW 51002, N'No se puede eliminar: COD_FONDO tiene tablas dependientes con FK (tbl_Centros/tbl_Inmuebles/tbl_Contratos/tbl_EEFF/tbl_Valores*)', 1; END
     DELETE FROM [dbo].[tbl_Fondos] WHERE [COD_FONDO] = @COD_FONDO;
-    IF @@ROWCOUNT = 0 THROW 51001, N'COD_FONDO no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'COD_FONDO no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Fondos', 'D', CAST(@COD_FONDO AS NVARCHAR(400)));
 END
 GO
@@ -190,7 +190,7 @@ BEGIN
         [Nom_Arrend] = @Nom_Arrend, [NomCorto_Arrend] = @NomCorto_Arrend, [GRUPO_ECON] = @GRUPO_ECON,
         [Sector_Arrend] = @Sector_Arrend, [Calif_Arrend] = @Calif_Arrend, [Contacto_Arrend] = @Contacto_Arrend
     WHERE [NIT] = @NIT;
-    IF @@ROWCOUNT = 0 THROW 51001, N'NIT no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'NIT no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Arrendatarios', 'U', @NIT);
 END
 GO
@@ -201,9 +201,9 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Refs INT;
     EXEC [app].[usp_Util_ContarReferencias] @Tabla = N'dbo.tbl_Arrendatarios', @Columna = N'NIT', @Valor = @NIT, @Total = @Refs OUTPUT;
-    IF @Refs > 0 THROW 51002, N'No se puede eliminar: NIT tiene contratos asociados', 1;
+    IF @Refs > 0 BEGIN THROW 51002, N'No se puede eliminar: NIT tiene contratos asociados', 1; END
     DELETE FROM [dbo].[tbl_Arrendatarios] WHERE [NIT] = @NIT;
-    IF @@ROWCOUNT = 0 THROW 51001, N'NIT no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'NIT no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Arrendatarios', 'D', @NIT);
 END
 GO
@@ -220,7 +220,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF @Divisor IS NOT NULL AND @Divisor NOT BETWEEN 0.01 AND 1000000
-        THROW 51004, N'Divisor debe estar entre 0.01 y 1,000,000', 1;
+        BEGIN THROW 51004, N'Divisor debe estar entre 0.01 y 1,000,000', 1; END
     INSERT INTO [dbo].[tbl_Cuentas]
         ([Cod_Cuenta], [Cuenta], [Signo], [Agrupación], [Agrup_Gastos], [Cálculo], [Por inmueble], [Divisor],
          [Suma], [Unidades], [Ranking_Inm], [Mostrar_pie], [Dispers_EjeX], [Dispers_EjeY], [Dispers_Burb])
@@ -239,14 +239,14 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF @Divisor IS NOT NULL AND @Divisor NOT BETWEEN 0.01 AND 1000000
-        THROW 51004, N'Divisor debe estar entre 0.01 y 1,000,000', 1;
+        BEGIN THROW 51004, N'Divisor debe estar entre 0.01 y 1,000,000', 1; END
     UPDATE [dbo].[tbl_Cuentas] SET
         [Cuenta] = @Cuenta, [Signo] = @Signo, [Agrupación] = @Agrupación, [Agrup_Gastos] = @Agrup_Gastos,
         [Cálculo] = @Cálculo, [Por inmueble] = @Por_inmueble, [Divisor] = @Divisor, [Suma] = @Suma,
         [Unidades] = @Unidades, [Ranking_Inm] = @Ranking_Inm, [Mostrar_pie] = @Mostrar_pie,
         [Dispers_EjeX] = @Dispers_EjeX, [Dispers_EjeY] = @Dispers_EjeY, [Dispers_Burb] = @Dispers_Burb
     WHERE [Cod_Cuenta] = @Cod_Cuenta;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Cod_Cuenta no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Cod_Cuenta no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Cuentas', 'U', CAST(@Cod_Cuenta AS NVARCHAR(400)));
 END
 GO
@@ -257,9 +257,9 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Refs INT;
     EXEC [app].[usp_Util_ContarReferencias] @Tabla = N'dbo.tbl_Cuentas', @Columna = N'Cod_Cuenta', @Valor = @Cod_Cuenta, @Total = @Refs OUTPUT;
-    IF @Refs > 0 THROW 51002, N'No se puede eliminar: Cod_Cuenta tiene tablas dependientes con FK (tbl_Valores*)', 1;
+    IF @Refs > 0 BEGIN THROW 51002, N'No se puede eliminar: Cod_Cuenta tiene tablas dependientes con FK (tbl_Valores*)', 1; END
     DELETE FROM [dbo].[tbl_Cuentas] WHERE [Cod_Cuenta] = @Cod_Cuenta;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Cod_Cuenta no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Cod_Cuenta no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Cuentas', 'D', CAST(@Cod_Cuenta AS NVARCHAR(400)));
 END
 GO
@@ -274,7 +274,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF NOT EXISTS (SELECT 1 FROM [dbo].[tbl_Niveles] WHERE [Cod_Nivel] = @Cod_Nivel)
-        THROW 51005, N'Cod_Nivel no existe en tbl_Niveles', 1;
+        BEGIN THROW 51005, N'Cod_Nivel no existe en tbl_Niveles', 1; END
     INSERT INTO [dbo].[tbl_Totales] ([Cod_Nivel], [Cod_Total], [Nom_Total], [Cruce1], [Cruce2])
     VALUES (@Cod_Nivel, @Cod_Total, @Nom_Total, @Cruce1, @Cruce2);
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Totales', 'I', CAST(@Cod_Nivel AS NVARCHAR(20)) + N'|' + @Cod_Total);
@@ -288,7 +288,7 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     UPDATE [dbo].[tbl_Totales] SET [Nom_Total] = @Nom_Total, [Cruce1] = @Cruce1, [Cruce2] = @Cruce2
     WHERE [Cod_Nivel] = @Cod_Nivel AND [Cod_Total] = @Cod_Total;
-    IF @@ROWCOUNT = 0 THROW 51001, N'(Cod_Nivel, Cod_Total) no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'(Cod_Nivel, Cod_Total) no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Totales', 'U', CAST(@Cod_Nivel AS NVARCHAR(20)) + N'|' + @Cod_Total);
 END
 GO
@@ -298,7 +298,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DELETE FROM [dbo].[tbl_Totales] WHERE [Cod_Nivel] = @Cod_Nivel AND [Cod_Total] = @Cod_Total;
-    IF @@ROWCOUNT = 0 THROW 51001, N'(Cod_Nivel, Cod_Total) no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'(Cod_Nivel, Cod_Total) no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Totales', 'D', CAST(@Cod_Nivel AS NVARCHAR(20)) + N'|' + @Cod_Total);
 END
 GO
@@ -317,7 +317,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF NOT EXISTS (SELECT 1 FROM [dbo].[tbl_Niveles] WHERE [Cod_Nivel] = @Cod_Nivel)
-        THROW 51005, N'Cod_Nivel no existe en tbl_Niveles', 1;
+        BEGIN THROW 51005, N'Cod_Nivel no existe en tbl_Niveles', 1; END
     INSERT INTO [dbo].[tbl_Centros]
         ([Cod_Nivel], [Cod_Fondo], [Cod_Centro], [Nombre], [Tipologia], [Subtipologia], [Ubicacion],
          [Inmueble], [Arrendatario], [GRUPO_ECON], [Sector_Arrend], [Riesgo], [VENC_YR])
@@ -342,7 +342,7 @@ BEGIN
         [Arrendatario] = @Arrendatario, [GRUPO_ECON] = @GRUPO_ECON, [Sector_Arrend] = @Sector_Arrend,
         [Riesgo] = @Riesgo, [VENC_YR] = @VENC_YR
     WHERE [Id] = @Id;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Id no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Id no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Centros', 'U', CAST(@Id AS NVARCHAR(400)));
 END
 GO
@@ -353,12 +353,12 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Cod_Centro NVARCHAR(20);
     SELECT @Cod_Centro = [Cod_Centro] FROM [dbo].[tbl_Centros] WHERE [Id] = @Id;
-    IF @Cod_Centro IS NULL THROW 51001, N'Id no existe', 1;
+    IF @Cod_Centro IS NULL BEGIN THROW 51001, N'Id no existe', 1; END
     -- Cod_Centro no tiene FK formal desde tbl_Valores* por diseño (ver
     -- 01_dimensiones_maestras.sql) -- se valida igual para no dejar
     -- huerfanos "silenciosos" en las tablas de hechos.
     IF EXISTS (SELECT 1 FROM [dbo].[tbl_Valores] WHERE [Cod_Centro] = @Cod_Centro)
-        THROW 51003, N'No se puede eliminar: Cod_Centro tiene filas en tbl_Valores (considera borrado logico en vez de fisico)', 1;
+        BEGIN THROW 51003, N'No se puede eliminar: Cod_Centro tiene filas en tbl_Valores (considera borrado logico en vez de fisico)', 1; END
     DELETE FROM [dbo].[tbl_Centros] WHERE [Id] = @Id;
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Centros', 'D', CAST(@Id AS NVARCHAR(400)));
 END
@@ -375,7 +375,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF NOT EXISTS (SELECT 1 FROM [dbo].[tbl_Fechas] WHERE [Mes] = @Fecha)
-        THROW 51005, N'Fecha no existe en tbl_Fechas', 1;
+        BEGIN THROW 51005, N'Fecha no existe en tbl_Fechas', 1; END
     INSERT INTO [dbo].[tbl_Inmuebles] ([Fecha], [Cod_Fondo], [Cod_Inm], [Nom_Inm], [Ubicacion], [Direccion], [Tipologia], [Estado], [Latitud], [Longitud])
     VALUES (@Fecha, @Cod_Fondo, @Cod_Inm, @Nom_Inm, @Ubicacion, @Direccion, @Tipologia, @Estado, @Latitud, @Longitud);
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Inmuebles', 'I', CONVERT(NVARCHAR(20), @Fecha, 23) + N'|' + CAST(@Cod_Inm AS NVARCHAR(30)));
@@ -392,7 +392,7 @@ BEGIN
         [Cod_Fondo] = @Cod_Fondo, [Nom_Inm] = @Nom_Inm, [Ubicacion] = @Ubicacion, [Direccion] = @Direccion,
         [Tipologia] = @Tipologia, [Estado] = @Estado, [Latitud] = @Latitud, [Longitud] = @Longitud
     WHERE [Fecha] = @Fecha AND [Cod_Inm] = @Cod_Inm;
-    IF @@ROWCOUNT = 0 THROW 51001, N'(Fecha, Cod_Inm) no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'(Fecha, Cod_Inm) no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Inmuebles', 'U', CONVERT(NVARCHAR(20), @Fecha, 23) + N'|' + CAST(@Cod_Inm AS NVARCHAR(30)));
 END
 GO
@@ -402,9 +402,9 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF EXISTS (SELECT 1 FROM [dbo].[tbl_Contratos] WHERE [FECHA] = @Fecha AND [COD_INM] = @Cod_Inm)
-        THROW 51002, N'No se puede eliminar: (Fecha, Cod_Inm) tiene contratos asociados', 1;
+        BEGIN THROW 51002, N'No se puede eliminar: (Fecha, Cod_Inm) tiene contratos asociados', 1; END
     DELETE FROM [dbo].[tbl_Inmuebles] WHERE [Fecha] = @Fecha AND [Cod_Inm] = @Cod_Inm;
-    IF @@ROWCOUNT = 0 THROW 51001, N'(Fecha, Cod_Inm) no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'(Fecha, Cod_Inm) no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Inmuebles', 'D', CONVERT(NVARCHAR(20), @Fecha, 23) + N'|' + CAST(@Cod_Inm AS NVARCHAR(30)));
 END
 GO
@@ -421,9 +421,9 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     IF @ESTADO NOT IN (N'VIGENTE', N'RESTITUIDO', N'NO VIGENTE')
-        THROW 51004, N'ESTADO debe ser VIGENTE, RESTITUIDO o NO VIGENTE', 1;
+        BEGIN THROW 51004, N'ESTADO debe ser VIGENTE, RESTITUIDO o NO VIGENTE', 1; END
     IF NOT EXISTS (SELECT 1 FROM [dbo].[tbl_Inmuebles] WHERE [Fecha] = @FECHA AND [Cod_Inm] = @COD_INM)
-        THROW 51005, N'(FECHA, COD_INM) no existe en tbl_Inmuebles', 1;
+        BEGIN THROW 51005, N'(FECHA, COD_INM) no existe en tbl_Inmuebles', 1; END
     INSERT INTO [dbo].[tbl_Contratos]
         ([FECHA], [COD_FONDO], [ESTADO], [COD_CTR], [NIT], [NOM_ARREND], [COD_INM], [DET_INM], [GLA], [Tipologia], [Fec_Inicio], [Fec_Fin], [IncremCanon])
     VALUES
@@ -445,7 +445,7 @@ BEGIN
         [DET_INM] = @DET_INM, [GLA] = @GLA, [Tipologia] = @Tipologia, [Fec_Inicio] = @Fec_Inicio,
         [Fec_Fin] = @Fec_Fin, [IncremCanon] = @IncremCanon
     WHERE [FECHA] = @FECHA AND [COD_CTR] = @COD_CTR AND [ESTADO] = @ESTADO;
-    IF @@ROWCOUNT = 0 THROW 51001, N'(FECHA, COD_CTR, ESTADO) no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'(FECHA, COD_CTR, ESTADO) no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor])
         VALUES ('tbl_Contratos', 'U', CONVERT(NVARCHAR(20), @FECHA, 23) + N'|' + @COD_CTR + N'|' + @ESTADO);
 END
@@ -456,7 +456,7 @@ AS
 BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DELETE FROM [dbo].[tbl_Contratos] WHERE [FECHA] = @FECHA AND [COD_CTR] = @COD_CTR AND [ESTADO] = @ESTADO;
-    IF @@ROWCOUNT = 0 THROW 51001, N'(FECHA, COD_CTR, ESTADO) no existe', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'(FECHA, COD_CTR, ESTADO) no existe', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor])
         VALUES ('tbl_Contratos', 'D', CONVERT(NVARCHAR(20), @FECHA, 23) + N'|' + @COD_CTR + N'|' + @ESTADO);
 END
@@ -477,7 +477,7 @@ BEGIN
         [Mostrar] = @Mostrar, [LTM] = @LTM, [YTD] = @YTD,
         [Mostrar_Vista_Años] = @Mostrar_Vista_Años, [Mostrar_Vista_Histórica] = @Mostrar_Vista_Histórica
     WHERE [Mes] = @Mes;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Mes no existe en tbl_Fechas', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Mes no existe en tbl_Fechas', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Fechas', 'U', CONVERT(NVARCHAR(20), @Mes, 23));
 END
 GO
@@ -488,9 +488,9 @@ BEGIN
     SET NOCOUNT ON; SET XACT_ABORT ON;
     DECLARE @Refs INT;
     EXEC [app].[usp_Util_ContarReferencias] @Tabla = N'dbo.tbl_Fechas', @Columna = N'Mes', @Valor = @Mes, @Total = @Refs OUTPUT;
-    IF @Refs > 0 THROW 51002, N'No se puede eliminar: Mes tiene tablas dependientes con FK (tbl_Inmuebles/tbl_EEFF/F351/etc.)', 1;
+    IF @Refs > 0 BEGIN THROW 51002, N'No se puede eliminar: Mes tiene tablas dependientes con FK (tbl_Inmuebles/tbl_EEFF/F351/etc.)', 1; END
     DELETE FROM [dbo].[tbl_Fechas] WHERE [Mes] = @Mes;
-    IF @@ROWCOUNT = 0 THROW 51001, N'Mes no existe en tbl_Fechas', 1;
+    IF @@ROWCOUNT = 0 BEGIN THROW 51001, N'Mes no existe en tbl_Fechas', 1; END
     INSERT INTO [dbo].[tbl_Auditoria_Cambios] ([Tabla], [Operacion], [PK_Valor]) VALUES ('tbl_Fechas', 'D', CONVERT(NVARCHAR(20), @Mes, 23));
 END
 GO
