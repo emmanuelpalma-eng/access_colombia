@@ -90,7 +90,12 @@ def check_schema(access_path):
     try:
         cursor = conn.cursor()
         for table_name, _overrides, _where in TABLES:
-            cols = [row.column_name for row in cursor.columns(table=table_name)]
+            # No usar cursor.columns() (SQLColumns): el driver de Access
+            # puede devolver metadatos con una codificacion que pyodbc no
+            # logra decodificar para ciertas tablas (UnicodeDecodeError).
+            # SELECT * + cursor.description evita ese camino del driver.
+            cursor.execute(f"SELECT * FROM [{table_name}]")
+            cols = [d[0] for d in cursor.description]
             cursor.execute(f"SELECT COUNT(*) FROM [{table_name}]")
             row_count = cursor.fetchone()[0]
             print(f"== {table_name}  ({row_count} filas en Access) ==")
