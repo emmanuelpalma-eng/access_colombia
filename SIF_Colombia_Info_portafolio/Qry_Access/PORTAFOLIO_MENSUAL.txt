@@ -1,0 +1,6 @@
+TRANSFORM Sum([tbl_Valores]![Valor]/[tbl_Cuentas]![Divisor]) AS Val
+SELECT tbl_Valores.Cod_Fondo, tbl_Valores.Cod_Nivel, tbl_Niveles.Nom_Nivel, tbl_Valores.Cod_Centro, tbl_Centros.Nombre, tbl_Centros.Inmueble, tbl_Centros.Arrendatario, tbl_Valores.Cod_Cuenta, tbl_Cuentas.Cuenta, tbl_Tiempos.Nom_Tiempo
+FROM tbl_Niveles INNER JOIN (((tbl_Centros INNER JOIN tbl_Valores ON (tbl_Centros.Cod_Centro = tbl_Valores.Cod_Centro) AND (tbl_Centros.Cod_Nivel = tbl_Valores.Cod_Nivel)) INNER JOIN tbl_Cuentas ON tbl_Valores.Cod_Cuenta = tbl_Cuentas.Cod_Cuenta) INNER JOIN tbl_Tiempos ON tbl_Valores.Cod_Tiempo = tbl_Tiempos.Cod_Tiempo) ON tbl_Niveles.Cod_Nivel = tbl_Valores.Cod_Nivel
+WHERE (((tbl_Valores.Cod_Fondo)=10 And (tbl_Valores.Cod_Fondo)=10) AND ((tbl_Valores.Cod_Tiempo)=1))
+GROUP BY tbl_Valores.Cod_Fondo, tbl_Valores.Cod_Nivel, tbl_Niveles.Nom_Nivel, tbl_Valores.Cod_Centro, tbl_Centros.Nombre, tbl_Centros.Inmueble, tbl_Centros.Tipologia, tbl_Centros.Subtipologia, tbl_Centros.Ubicacion, tbl_Centros.Arrendatario, tbl_Valores.Cod_Cuenta, tbl_Cuentas.Cuenta, tbl_Tiempos.Nom_Tiempo
+PIVOT tbl_Valores.Fecha;
