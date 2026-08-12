@@ -21,6 +21,12 @@ USO:
 
 Requisito previo: correr Colombia/poc_colombia/ (ver su README) contra la
 base destino -- este script ya no crea el esquema.
+
+Ya NO carga tbl_Fechas, tbl_Usuarios, tbl_Inmuebles, VL_Disp_xa_Venta ni
+tbl_Contratos -- son dimensiones compartidas y pasaron a ser propiedad de
+Colombia/SIF_Colombia_Parametros/import_data.py (fuente autoritativa
+confirmada: Informes FIC - Parámetros.accdb). Este script debe correr
+DESPUES de SIF_Colombia_Parametros.
 """
 
 import argparse
@@ -40,19 +46,14 @@ DEFAULT_ACCESS_PATH = (
 # tipo = "dimension" (otras tablas tienen FK hacia esta -> usp_ReemplazarDimension)
 #      | "fact" (tabla de hechos, nadie la referencia -> usp_CargarFactoParticionado)
 TABLES = [
-    ("tbl_Fechas", {}, None, "dimension"),
     ("tbl_Cuentas_EEFF", {}, None, "dimension"),
-    ("tbl_Usuarios", {}, None, "dimension"),
-    ("tbl_Inmuebles", {}, None, "dimension"),
     ("tbl_Cruce_SIF", {}, "Cod_Cta <> 0", "dimension"),  # 6 filas placeholder sin cuenta real
     ("tbl_Cruce351", {}, None, "dimension"),  # Cod_Inm admite NULL (3 filas sin asignar)
     ("tbl_Valores_Valor_Libros", {}, None, "fact"),
-    ("VL_Disp_xa_Venta", {}, None, "fact"),
     # Cod_Inm 0 y 5000: filas de totales/consolidado ("351 DF"), no una propiedad real.
     # Cod_Inm 997: propiedad real pero tbl_Inmuebles no tiene foto para esos meses.
     ("tbl_ValorLibros_xInmueble", {}, "Cod_Inm NOT IN (0, 5000, 997)", "fact"),
     ("VL_CentralPoint", {}, "FECHA IS NOT NULL", "fact"),  # 3 filas completamente vacias
-    ("tbl_Contratos", {}, None, "dimension"),
     ("tbl_EEFF", {}, None, "fact"),
     ("F351", {"######": "Campo13"}, None, "fact"),
 ]

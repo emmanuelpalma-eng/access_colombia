@@ -34,6 +34,7 @@ confiables, todos los conteos de fila esperados.
 10. `schema/08_staging.sql`
 11. `schema/09_sp_etl.sql`
 12. `schema/10_sp_dimensiones.sql`
+13. `schema/11_detalle_contratos_inmuebles.sql`
 
 ## Plan B si no hay particionamiento nativo disponible
 
@@ -55,22 +56,41 @@ flujo), **excepto**:
 - Artefactos de Access que no son datos reales (`*$_ErroresDeImportación`,
   `tbl_Fondos_Filtro`).
 
-Carga/testing de datos reales por ahora solo para FIC-351 e Info Portafolio
-(ver `SIF_Colombia_351/` y `SIF_Colombia_Info_portafolio/`, cuyo
-`import_data.py` ya apunta a este esquema). Los loaders completos de
-Reportes/Gastos Otros/RE/PowerBI quedan para una fase siguiente.
+Carga/testing de datos reales para FIC-351, Info Portafolio y ahora todas
+las dimensiones compartidas + detalle contractual/inmuebles (ver
+`SIF_Colombia_Parametros/`, `SIF_Colombia_351/` y
+`SIF_Colombia_Info_portafolio/`, cuyos `import_data.py` ya apuntan a este
+esquema). Los loaders completos de Reportes/Gastos Otros/RE quedan para una
+fase siguiente.
+
+`Informes FIC - Parámetros.accdb` (+ 4 hojas de `Bases_Colombia\Input\*.xlsx`
+sin tabla Access equivalente) se confirmó como la fuente autoritativa de las
+dimensiones compartidas (conteos de fila exactos con las copias que traían
+351/Info Portafolio/PowerBI) — ver `SIF_Colombia_Parametros/README.md`. Trae
+además detalle nunca modelado antes: `tbl_Contratos_Detalle` (~80 columnas de
+detalle legal/financiero por contrato), `tbl_Inmuebles_Estrategia`,
+`tbl_Inmuebles_Compras`, `tbl_Inmuebles_MI_Contratos`, `tbl_MI`,
+`tbl_Inmuebles_Otros`, `tbl_Contratos_Otros_Fondos`,
+`tbl_Contratos_Restituidos_OtrosFondos` (ver `schema/11_detalle_contratos_
+inmuebles.sql`). `SIF_Colombia_PowerBI/import_dimensiones.py` quedó
+`.legacy` (supersedido).
 
 ## Carga de datos probada (orden real usado)
 
-1. `SIF_Colombia_PowerBI/import_dimensiones.py` -- carga `tbl_Fondos` y
-   `tbl_Arrendatarios` (PowerBI). **Requisito duro**: sin esto, los imports
-   de 351 e Info Portafolio fallan por FK (varias tablas referencian estas
-   2 dimensiones).
-2. `SIF_Colombia_Info_portafolio/import_data.py` -- carga `tbl_Niveles`,
-   `tbl_Tiempos`, `tbl_Cuentas`, `tbl_Totales`, `tbl_Centros`, `tbl_Valores`.
-3. `SIF_Colombia_351/import_data.py` -- carga `tbl_Fechas` y el resto (351
-   depende de `tbl_Tiempos`/`tbl_Niveles` de Info Portafolio para
-   `tbl_Valores_Valor_Libros`).
+1. `SIF_Colombia_Parametros/import_data.py` -- carga **todas** las
+   dimensiones compartidas (`tbl_Fechas`, `tbl_Niveles`, `tbl_Tiempos`,
+   `tbl_Totales`, `tbl_Cuentas`, `tbl_Fondos`, `tbl_Arrendatarios`,
+   `tbl_Centros`, `tbl_Usuarios`, `tbl_Inmuebles`, `tbl_Contratos`,
+   `VL_Disp_xa_Venta`) + las tablas nuevas de detalle. **Requisito duro**:
+   sin esto, los imports de 351 e Info Portafolio fallan por FK.
+2. `SIF_Colombia_Info_portafolio/import_data.py` -- carga solo `tbl_Valores`
+   (su hecho propio; las dimensiones que cargaba antes ahora las trae el
+   paso 1).
+3. `SIF_Colombia_351/import_data.py` -- carga solo sus hechos/EEFF propios
+   (`tbl_Cuentas_EEFF`, `tbl_Cruce_SIF`, `tbl_Cruce351`,
+   `tbl_Valores_Valor_Libros`, `tbl_ValorLibros_xInmueble`, `VL_CentralPoint`,
+   `tbl_EEFF`, `F351`; las dimensiones que cargaba antes ahora las trae el
+   paso 1).
 
 Durante esta prueba se ajustaron, contra datos reales (no se habían
 validado al escribir el schema por primera vez):

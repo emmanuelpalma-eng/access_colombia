@@ -28,9 +28,13 @@ Parametros opcionales:
                      el numero de round-trips)
 
 Requisito previo: correr Colombia/poc_colombia/ (ver su README) contra la
-base destino -- este script ya no crea el esquema. tbl_Fechas NO esta en la
-lista de este script a proposito: es la misma dimension de calendario que ya
-carga SIF_Colombia_351/import_data.py en esta misma base.
+base destino -- este script ya no crea el esquema.
+
+Ya NO carga tbl_Niveles, tbl_Tiempos, tbl_Cuentas, tbl_Totales ni
+tbl_Centros -- son dimensiones compartidas y pasaron a ser propiedad de
+Colombia/SIF_Colombia_Parametros/import_data.py (fuente autoritativa
+confirmada: Informes FIC - Parámetros.accdb). Este script debe correr
+DESPUES de SIF_Colombia_Parametros.
 """
 
 import argparse
@@ -49,11 +53,6 @@ DEFAULT_ACCESS_PATH = (
 # Cada tupla: (tabla, mapeo_columnas_origen->destino, filtro_where_opcional, tipo)
 # tipo = "dimension" (usp_ReemplazarDimension) | "fact" (usp_CargarFactoParticionado)
 TABLES = [
-    ("tbl_Niveles", {}, None, "dimension"),
-    ("tbl_Tiempos", {}, None, "dimension"),
-    ("tbl_Cuentas", {}, None, "dimension"),
-    ("tbl_Totales", {}, None, "dimension"),
-    ("tbl_Centros", {}, None, "dimension"),
     ("tbl_Valores", {}, "Cod_Cuenta <> 0", "fact"),  # 1 fila placeholder sin cuenta real
 ]
 

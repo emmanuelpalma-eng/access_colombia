@@ -13,3 +13,8 @@ __pycache__/
 db_config.json
 *.env
 config.env
+
+# Repo separado (github.com/patria-investimentos/sif-colombia, skeleton de
+# Backstage para la app web) -- clon independiente, con su propio git, no
+# debe versionarse dentro de access_colombia.
+sif-colombia-app/

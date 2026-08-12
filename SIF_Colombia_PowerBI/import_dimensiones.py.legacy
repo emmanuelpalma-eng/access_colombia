@@ -1,4 +1,11 @@
 """
+SUPERSEDIDO por Colombia/SIF_Colombia_Parametros/import_data.py.
+
+"Informes FIC - Parámetros.accdb" se confirmó como la fuente autoritativa de
+las dimensiones compartidas (conteos de fila exactos con esta y otras copias),
+incluyendo tbl_Fondos/tbl_Arrendatarios. Este script queda solo de referencia
+histórica -- no correr contra poc_colombia, usar SIF_Colombia_Parametros.
+
 Carga SOLO las dimensiones de "Informes FIC - PowerBI.accdb" que son
 requisito duro para que SIF_Colombia_351 y SIF_Colombia_Info_portafolio
 funcionen: tbl_Fondos y tbl_Arrendatarios. Varias tablas del modelo
