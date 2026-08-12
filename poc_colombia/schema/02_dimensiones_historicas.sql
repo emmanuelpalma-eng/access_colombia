@@ -21,25 +21,25 @@ CREATE TABLE [dbo].[tbl_Inmuebles] (
     [Cod_Inm_Nue]           DECIMAL(18,0)   NULL,
     [Cod_Inm1]              DECIMAL(18,0)   NULL,
     [Cod_Inm1_Nue]          DECIMAL(18,0)   NULL,
-    [Cod_Inm_TXT]           NVARCHAR(20)    NULL,
+    [Cod_Inm_TXT]           NVARCHAR(255)   NULL,
     [Nom_Inm]               NVARCHAR(255)   NULL,
     [Ubicacion]             NVARCHAR(255)   NULL,
     [Ubic_Pol_Inv]          NVARCHAR(255)   NULL,
     [Direccion]             NVARCHAR(255)   NULL,
-    [Tipologia]             NVARCHAR(100)   NULL,
-    [Tipologia_Cons]        NVARCHAR(100)   NULL,
-    [Subtipologia]          NVARCHAR(100)   NULL,
-    [Estado]                NVARCHAR(50)    NULL,
-    [Tipo_Riesgo]           NVARCHAR(50)    NULL,
-    [Georef]                NVARCHAR(50)    NULL,
-    [Coordenadas]           NVARCHAR(50)    NULL,
+    [Tipologia]             NVARCHAR(255)   NULL,
+    [Tipologia_Cons]        NVARCHAR(255)   NULL,
+    [Subtipologia]          NVARCHAR(255)   NULL,
+    [Estado]                NVARCHAR(255)   NULL,
+    [Tipo_Riesgo]           NVARCHAR(255)   NULL,
+    [Georef]                NVARCHAR(255)   NULL,
+    [Coordenadas]           NVARCHAR(255)   NULL,
     [Latitud]               FLOAT           NULL,
     [Longitud]              FLOAT           NULL,
-    [Titularidad]           NVARCHAR(100)   NULL,
-    [Subtipologia3]         NVARCHAR(100)   NULL,
-    [Certificacion]         NVARCHAR(100)   NULL,
-    [Año_de_contruccion]    NVARCHAR(10)    NULL,
-    [Conteo]                NVARCHAR(10)    NULL,
+    [Titularidad]           NVARCHAR(255)   NULL,
+    [Subtipologia3]         NVARCHAR(255)   NULL,
+    [Certificacion]         NVARCHAR(255)   NULL,
+    [Año_de_contruccion]    NVARCHAR(255)   NULL,
+    [Conteo]                NVARCHAR(255)   NULL,
     CONSTRAINT [PK_tbl_Inmuebles] PRIMARY KEY CLUSTERED ([Fecha], [Cod_Inm]),
     CONSTRAINT [FK_tbl_Inmuebles_tbl_Fechas]
         FOREIGN KEY ([Fecha]) REFERENCES [dbo].[tbl_Fechas]([Mes]),
@@ -50,6 +50,20 @@ GO
 
 /* ============================================================
    tbl_Contratos
+
+   Sin FK hacia tbl_Inmuebles: tbl_Inmuebles (via fuente 351) solo cubre
+   fotos desde 2024-01, pero tbl_Contratos tiene historial desde 2008-10
+   (85% de las filas de 351 quedan fuera del rango). Diferencia real de
+   profundidad historica entre fuentes, no datos sucios -- confirmado al
+   cargar datos reales.
+
+   Sin FK hacia tbl_Arrendatarios: ~3 de 222 NIT reales de contratos de la
+   fuente 351 no estan (todavia) en el catalogo maestro de PowerBI (336
+   arrendatarios) -- brecha real de cobertura entre fuentes mantenidas por
+   separado, confirmado al cargar datos reales.
+
+   Ambos casos se dejan con indice, no FK -- mismo criterio que
+   tbl_Cruce351/tbl_ValorLibros_xInmueble en 05_eeff_351.sql.
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Contratos] (
     [FECHA]         DATETIME2(0)    NOT NULL,
@@ -62,17 +76,13 @@ CREATE TABLE [dbo].[tbl_Contratos] (
     [COD_INM]       DECIMAL(18,0)   NOT NULL,
     [DET_INM]       NVARCHAR(255)   NULL,
     [GLA]           DECIMAL(18,2)   NULL,
-    [Tipologia]     NVARCHAR(100)   NULL,
+    [Tipologia]     NVARCHAR(255)   NULL,
     [Fec_Inicio]    DATETIME2(0)    NULL,
     [Fec_Fin]       DATETIME2(0)    NULL,
-    [IncremCanon]   NVARCHAR(100)   NULL,
+    [IncremCanon]   NVARCHAR(255)   NULL,
     CONSTRAINT [PK_tbl_Contratos] PRIMARY KEY CLUSTERED ([FECHA], [COD_CTR], [ESTADO]),
-    CONSTRAINT [FK_tbl_Contratos_tbl_Inmuebles]
-        FOREIGN KEY ([FECHA], [COD_INM]) REFERENCES [dbo].[tbl_Inmuebles]([Fecha], [Cod_Inm]),
     CONSTRAINT [FK_tbl_Contratos_tbl_Fondos]
-        FOREIGN KEY ([COD_FONDO]) REFERENCES [dbo].[tbl_Fondos]([COD_FONDO]),
-    CONSTRAINT [FK_tbl_Contratos_tbl_Arrendatarios]
-        FOREIGN KEY ([NIT]) REFERENCES [dbo].[tbl_Arrendatarios]([NIT])
+        FOREIGN KEY ([COD_FONDO]) REFERENCES [dbo].[tbl_Fondos]([COD_FONDO])
 );
 GO
 CREATE NONCLUSTERED INDEX [IX_tbl_Contratos_FECHA_COD_INM] ON [dbo].[tbl_Contratos]([FECHA], [COD_INM]);

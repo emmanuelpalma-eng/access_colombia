@@ -128,7 +128,10 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-        EXEC [etl].[usp_RegistrarCarga] @TablaDestino = @TablaDestino, @FilasCargadas = NULL, @Resultado = N'ERROR', @Mensaje = ERROR_MESSAGE();
+        -- EXEC no acepta una llamada a funcion como ERROR_MESSAGE() directamente
+        -- como valor de parametro -- hay que asignarla a una variable primero.
+        DECLARE @ErrMsg NVARCHAR(MAX) = ERROR_MESSAGE();
+        EXEC [etl].[usp_RegistrarCarga] @TablaDestino = @TablaDestino, @FilasCargadas = NULL, @Resultado = N'ERROR', @Mensaje = @ErrMsg;
         THROW;
     END CATCH
 END
@@ -218,7 +221,10 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-        EXEC [etl].[usp_RegistrarCarga] @TablaDestino = @TablaDestino, @FilasCargadas = NULL, @Resultado = N'ERROR', @Mensaje = ERROR_MESSAGE();
+        -- EXEC no acepta una llamada a funcion como ERROR_MESSAGE() directamente
+        -- como valor de parametro -- hay que asignarla a una variable primero.
+        DECLARE @ErrMsg NVARCHAR(MAX) = ERROR_MESSAGE();
+        EXEC [etl].[usp_RegistrarCarga] @TablaDestino = @TablaDestino, @FilasCargadas = NULL, @Resultado = N'ERROR', @Mensaje = @ErrMsg;
         THROW;
     END CATCH
 END

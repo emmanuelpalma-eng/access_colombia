@@ -11,3 +11,5 @@ __pycache__/
 
 # Credenciales locales, nunca deben subirse al repo.
 db_config.json
+*.env
+config.env

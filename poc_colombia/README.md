@@ -16,6 +16,10 @@ alcance de este release. Ver el diagrama `Bases_Colombia/SIF Colombia -
 Modelo General (flujo de datos entre las 6 bases Access).json` para el mapa
 de quién alimenta a quién.
 
+**Estado**: probado de punta a punta con datos reales de FIC-351 e Info
+Portafolio (ver sección "Carga de datos probada" más abajo) -- 0 FKs no
+confiables, todos los conteos de fila esperados.
+
 ## Orden de ejecución
 
 1. `Verificar_Version_SQL.sql` — confirmar que el servidor soporta particionamiento nativo (SQL Server 2017+, o 2016 SP1+) antes de seguir.
@@ -53,8 +57,34 @@ flujo), **excepto**:
 
 Carga/testing de datos reales por ahora solo para FIC-351 e Info Portafolio
 (ver `SIF_Colombia_351/` y `SIF_Colombia_Info_portafolio/`, cuyo
-`import_data.py` ya apunta a este esquema). Los loaders de Reportes/Gastos
-Otros/RE/PowerBI quedan para una fase siguiente.
+`import_data.py` ya apunta a este esquema). Los loaders completos de
+Reportes/Gastos Otros/RE/PowerBI quedan para una fase siguiente.
+
+## Carga de datos probada (orden real usado)
+
+1. `SIF_Colombia_PowerBI/import_dimensiones.py` -- carga `tbl_Fondos` y
+   `tbl_Arrendatarios` (PowerBI). **Requisito duro**: sin esto, los imports
+   de 351 e Info Portafolio fallan por FK (varias tablas referencian estas
+   2 dimensiones).
+2. `SIF_Colombia_Info_portafolio/import_data.py` -- carga `tbl_Niveles`,
+   `tbl_Tiempos`, `tbl_Cuentas`, `tbl_Totales`, `tbl_Centros`, `tbl_Valores`.
+3. `SIF_Colombia_351/import_data.py` -- carga `tbl_Fechas` y el resto (351
+   depende de `tbl_Tiempos`/`tbl_Niveles` de Info Portafolio para
+   `tbl_Valores_Valor_Libros`).
+
+Durante esta prueba se ajustaron, contra datos reales (no se habían
+validado al escribir el schema por primera vez):
+- Varias columnas de texto adivinadas demasiado angostas (truncamiento) →
+  se ensancharon a `NVARCHAR(255)`.
+- `[Valor]`/`SALDO`/campos de moneda de la familia de facts →
+  `DECIMAL(18,4)`/`(19,4)` desbordaba con valores reales grandes →
+  `DECIMAL(24,4)`/`(25,4)`.
+- `F351.[Unidad de Captura]` y `[No asignado por la entidad]` tienen
+  decimales reales pese al nombre → de `DECIMAL(18,0)` a `DECIMAL(18,4)`.
+- 3 FKs adicionales resultaron insostenibles con datos reales (mismo patrón
+  que las ya documentadas en cada schema): `tbl_Contratos` → `tbl_Inmuebles`,
+  `tbl_EEFF` → `tbl_Cuentas_EEFF`, `tbl_Contratos` → `tbl_Arrendatarios`.
+  Se eliminaron, se dejó índice.
 
 ## Esquemas SQL
 

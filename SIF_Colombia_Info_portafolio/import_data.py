@@ -34,6 +34,7 @@ carga SIF_Colombia_351/import_data.py en esta misma base.
 """
 
 import argparse
+import decimal
 import getpass
 import os
 import sys
@@ -93,6 +94,13 @@ def check_schema(access_path):
         conn.close()
 
 
+def _clean_row(row):
+    # Access CURRENCY llega via pyodbc como decimal.Decimal; fast_executemany
+    # tiene un bug conocido con Decimal ("Converting decimal loses precision")
+    # sin importar el tipo de columna destino -- convertir a float lo evita.
+    return tuple(float(v) if isinstance(v, decimal.Decimal) else v for v in row)
+
+
 def load_to_staging(access_conn, sql_conn, table_name, overrides, where, batch_size):
     sql_conn.cursor().execute(f"TRUNCATE TABLE stg.[{table_name}]")
 
@@ -116,7 +124,7 @@ def load_to_staging(access_conn, sql_conn, table_name, overrides, where, batch_s
         rows = access_cursor.fetchmany(batch_size)
         if not rows:
             break
-        sql_cursor.executemany(insert_sql, [tuple(r) for r in rows])
+        sql_cursor.executemany(insert_sql, [_clean_row(r) for r in rows])
         total += len(rows)
         if total % (batch_size * 20) == 0:
             print(f"\n  ... {total} filas hasta ahora", end="")

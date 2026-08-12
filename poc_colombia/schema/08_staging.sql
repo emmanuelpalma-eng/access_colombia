@@ -18,25 +18,25 @@ CREATE TABLE [stg].[tbl_Fechas] (
     [Mes_TIR] DATETIME2(0) NULL, [Año_Seguros] DATETIME2(0) NULL, [Año_Otras cuentas] DATETIME2(0) NULL
 );
 GO
-CREATE TABLE [stg].[tbl_Niveles] ([Cod_Nivel] INT NULL, [Nom_Nivel] NVARCHAR(100) NULL);
+CREATE TABLE [stg].[tbl_Niveles] ([Cod_Nivel] INT NULL, [Nom_Nivel] NVARCHAR(255) NULL);
 GO
-CREATE TABLE [stg].[tbl_Tiempos] ([Cod_Tiempo] INT NULL, [Nom_Tiempo] NVARCHAR(50) NULL);
+CREATE TABLE [stg].[tbl_Tiempos] ([Cod_Tiempo] INT NULL, [Nom_Tiempo] NVARCHAR(255) NULL);
 GO
 CREATE TABLE [stg].[tbl_Fondos] (
-    [COD_FONDO] INT NULL, [COD_FONDO_FIDU] INT NULL, [ABREV_FONDO] NVARCHAR(20) NULL,
-    [NOM_CORTO_FONDO] NVARCHAR(50) NULL, [NOM_FONDO] NVARCHAR(500) NULL,
+    [COD_FONDO] INT NULL, [COD_FONDO_FIDU] INT NULL, [ABREV_FONDO] NVARCHAR(255) NULL,
+    [NOM_CORTO_FONDO] NVARCHAR(255) NULL, [NOM_FONDO] NVARCHAR(500) NULL,
     [FIDU] NVARCHAR(255) NULL, [FONDO] NVARCHAR(255) NULL
 );
 GO
 CREATE TABLE [stg].[tbl_Arrendatarios] (
-    [NIT] NVARCHAR(20) NULL, [Nom_Arrend] NVARCHAR(255) NULL, [NomCorto_Arrend] NVARCHAR(100) NULL,
-    [GRUPO_ECON] NVARCHAR(255) NULL, [Sector_Arrend] NVARCHAR(100) NULL,
-    [Calif_Arrend] NVARCHAR(20) NULL, [Contacto_Arrend] NVARCHAR(255) NULL
+    [NIT] NVARCHAR(20) NULL, [Nom_Arrend] NVARCHAR(255) NULL, [NomCorto_Arrend] NVARCHAR(255) NULL,
+    [GRUPO_ECON] NVARCHAR(255) NULL, [Sector_Arrend] NVARCHAR(255) NULL,
+    [Calif_Arrend] NVARCHAR(255) NULL, [Contacto_Arrend] NVARCHAR(255) NULL
 );
 GO
 CREATE TABLE [stg].[tbl_Cuentas] (
     [Cod_Cuenta] INT NULL, [Cuenta] NVARCHAR(255) NULL, [Signo] INT NULL,
-    [Agrupación] NVARCHAR(100) NULL, [Agrup_Gastos] INT NULL, [Cálculo] INT NULL,
+    [Agrupación] NVARCHAR(255) NULL, [Agrup_Gastos] INT NULL, [Cálculo] INT NULL,
     [Por inmueble] INT NULL, [Divisor] FLOAT NULL, [Suma] INT NULL,
     [Unidades] INT NULL, [Ranking_Inm] INT NULL, [Mostrar_pie] INT NULL,
     [Dispers_EjeX] INT NULL, [Dispers_EjeY] INT NULL, [Dispers_Burb] INT NULL
@@ -49,30 +49,30 @@ CREATE TABLE [stg].[tbl_Totales] (
 GO
 CREATE TABLE [stg].[tbl_Centros] (
     [Cod_Nivel] INT NULL, [Cod_Fondo] INT NULL, [Cod_Centro] NVARCHAR(20) NULL,
-    [Nombre] NVARCHAR(255) NULL, [Tipologia] NVARCHAR(100) NULL, [Subtipologia] NVARCHAR(100) NULL,
+    [Nombre] NVARCHAR(255) NULL, [Tipologia] NVARCHAR(255) NULL, [Subtipologia] NVARCHAR(255) NULL,
     [Ubicacion] NVARCHAR(255) NULL, [Inmueble] NVARCHAR(255) NULL, [Arrendatario] NVARCHAR(255) NULL,
-    [GRUPO_ECON] NVARCHAR(255) NULL, [Sector_Arrend] NVARCHAR(100) NULL, [Riesgo] NVARCHAR(50) NULL,
+    [GRUPO_ECON] NVARCHAR(255) NULL, [Sector_Arrend] NVARCHAR(255) NULL, [Riesgo] NVARCHAR(255) NULL,
     [VENC_YR] INT NULL
 );
 GO
 CREATE TABLE [stg].[tbl_Inmuebles] (
     [Fecha] DATETIME2(0) NULL, [Cod_Fondo] INT NULL, [Cod_Inm] DECIMAL(18,0) NULL,
     [Cod_Inm_Nue] DECIMAL(18,0) NULL, [Cod_Inm1] DECIMAL(18,0) NULL, [Cod_Inm1_Nue] DECIMAL(18,0) NULL,
-    [Cod_Inm_TXT] NVARCHAR(20) NULL, [Nom_Inm] NVARCHAR(255) NULL, [Ubicacion] NVARCHAR(255) NULL,
-    [Ubic_Pol_Inv] NVARCHAR(255) NULL, [Direccion] NVARCHAR(255) NULL, [Tipologia] NVARCHAR(100) NULL,
-    [Tipologia_Cons] NVARCHAR(100) NULL, [Subtipologia] NVARCHAR(100) NULL, [Estado] NVARCHAR(50) NULL,
-    [Tipo_Riesgo] NVARCHAR(50) NULL, [Georef] NVARCHAR(50) NULL, [Coordenadas] NVARCHAR(50) NULL,
-    [Latitud] FLOAT NULL, [Longitud] FLOAT NULL, [Titularidad] NVARCHAR(100) NULL,
-    [Subtipologia3] NVARCHAR(100) NULL, [Certificacion] NVARCHAR(100) NULL,
-    [Año_de_contruccion] NVARCHAR(10) NULL, [Conteo] NVARCHAR(10) NULL
+    [Cod_Inm_TXT] NVARCHAR(255) NULL, [Nom_Inm] NVARCHAR(255) NULL, [Ubicacion] NVARCHAR(255) NULL,
+    [Ubic_Pol_Inv] NVARCHAR(255) NULL, [Direccion] NVARCHAR(255) NULL, [Tipologia] NVARCHAR(255) NULL,
+    [Tipologia_Cons] NVARCHAR(255) NULL, [Subtipologia] NVARCHAR(255) NULL, [Estado] NVARCHAR(255) NULL,
+    [Tipo_Riesgo] NVARCHAR(255) NULL, [Georef] NVARCHAR(255) NULL, [Coordenadas] NVARCHAR(255) NULL,
+    [Latitud] FLOAT NULL, [Longitud] FLOAT NULL, [Titularidad] NVARCHAR(255) NULL,
+    [Subtipologia3] NVARCHAR(255) NULL, [Certificacion] NVARCHAR(255) NULL,
+    [Año_de_contruccion] NVARCHAR(255) NULL, [Conteo] NVARCHAR(255) NULL
 );
 GO
 CREATE TABLE [stg].[tbl_Contratos] (
     [FECHA] DATETIME2(0) NULL, [COD_FONDO] INT NULL, [ESTADO] NVARCHAR(30) NULL,
     [COD_CTR] NVARCHAR(20) NULL, [NIT] NVARCHAR(20) NULL, [NOM_ARREND] NVARCHAR(255) NULL,
     [COD_INM] DECIMAL(18,0) NULL, [DET_INM] NVARCHAR(255) NULL, [GLA] FLOAT NULL,
-    [Tipologia] NVARCHAR(100) NULL, [Fec_Inicio] DATETIME2(0) NULL, [Fec_Fin] DATETIME2(0) NULL,
-    [IncremCanon] NVARCHAR(100) NULL
+    [Tipologia] NVARCHAR(255) NULL, [Fec_Inicio] DATETIME2(0) NULL, [Fec_Fin] DATETIME2(0) NULL,
+    [IncremCanon] NVARCHAR(255) NULL
 );
 GO
 
@@ -160,7 +160,7 @@ CREATE TABLE [stg].[tbl_EEFF] (
 GO
 CREATE TABLE [stg].[F351] (
     [FECHA] DATETIME2(0) NULL, [INMUEBLE] NVARCHAR(255) NULL, [matrícula] NVARCHAR(50) NULL,
-    [Unidad de Captura] DECIMAL(18,0) NULL, [No asignado por la entidad] DECIMAL(18,0) NULL,
+    [Unidad de Captura] FLOAT NULL, [No asignado por la entidad] FLOAT NULL,
     [Fecha emisión] FLOAT NULL, [Valor nominal] FLOAT NULL,
     [Valor de compra moneda original] FLOAT NULL, [Valor de compra en pesos] FLOAT NULL,
     [Vr mercado o valor presente en $] FLOAT NULL, [Campo11] NVARCHAR(255) NULL,

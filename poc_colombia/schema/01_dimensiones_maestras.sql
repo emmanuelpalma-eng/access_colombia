@@ -43,7 +43,7 @@ GO
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Niveles] (
     [Cod_Nivel]     INT             NOT NULL,
-    [Nom_Nivel]     NVARCHAR(100)   NULL,
+    [Nom_Nivel]     NVARCHAR(255)   NULL,
     CONSTRAINT [PK_tbl_Niveles] PRIMARY KEY CLUSTERED ([Cod_Nivel])
 );
 GO
@@ -53,7 +53,7 @@ GO
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Tiempos] (
     [Cod_Tiempo]    INT             NOT NULL,
-    [Nom_Tiempo]    NVARCHAR(50)    NULL,
+    [Nom_Tiempo]    NVARCHAR(255)   NULL,
     CONSTRAINT [PK_tbl_Tiempos] PRIMARY KEY CLUSTERED ([Cod_Tiempo])
 );
 GO
@@ -63,12 +63,18 @@ GO
    COD_FONDO se tipifica INT (no DECIMAL) a proposito -- con solo ~15 fondos
    un INT es exacto y permite que sea FK-able sin friccion desde
    tbl_Centros/tbl_Inmuebles/tbl_Contratos/tbl_EEFF/tbl_Valores*.
+
+   IMPORTANTE: se agrega manualmente una fila COD_FONDO=0 ("No aplica /
+   Consolidado") ademas de las ~15 filas reales de PowerBI -- varias fuentes
+   usan 0 como centinela para filas que no son especificas de un fondo (ej.
+   niveles de rollup en tbl_Centros). Sin esta fila placeholder, la FK desde
+   esas tablas falla en cascada. Ver SIF_Colombia_PowerBI/import_dimensiones.py.
    ============================================================ */
 CREATE TABLE [dbo].[tbl_Fondos] (
     [COD_FONDO]         INT             NOT NULL,
     [COD_FONDO_FIDU]    INT             NULL,
-    [ABREV_FONDO]       NVARCHAR(20)    NULL,
-    [NOM_CORTO_FONDO]   NVARCHAR(50)    NULL,
+    [ABREV_FONDO]       NVARCHAR(255)   NULL,
+    [NOM_CORTO_FONDO]   NVARCHAR(255)   NULL,
     [NOM_FONDO]         NVARCHAR(500)   NULL,
     [FIDU]              NVARCHAR(255)   NULL,
     [FONDO]             NVARCHAR(255)   NULL,
@@ -82,10 +88,10 @@ GO
 CREATE TABLE [dbo].[tbl_Arrendatarios] (
     [NIT]               NVARCHAR(20)    NOT NULL,
     [Nom_Arrend]        NVARCHAR(255)   NULL,
-    [NomCorto_Arrend]   NVARCHAR(100)   NULL,
+    [NomCorto_Arrend]   NVARCHAR(255)   NULL,
     [GRUPO_ECON]        NVARCHAR(255)   NULL,
-    [Sector_Arrend]     NVARCHAR(100)   NULL,
-    [Calif_Arrend]      NVARCHAR(20)    NULL,
+    [Sector_Arrend]     NVARCHAR(255)   NULL,
+    [Calif_Arrend]      NVARCHAR(255)   NULL,
     [Contacto_Arrend]   NVARCHAR(255)   NULL,
     CONSTRAINT [PK_tbl_Arrendatarios] PRIMARY KEY CLUSTERED ([NIT])
 );
@@ -99,7 +105,7 @@ CREATE TABLE [dbo].[tbl_Cuentas] (
     [Cod_Cuenta]        INT             NOT NULL,
     [Cuenta]            NVARCHAR(255)   NULL,
     [Signo]             INT             NULL,
-    [Agrupación]        NVARCHAR(100)   NULL,
+    [Agrupación]        NVARCHAR(255)   NULL,
     [Agrup_Gastos]      INT             NULL,
     [Cálculo]           INT             NULL,
     [Por inmueble]      INT             NULL,
@@ -145,14 +151,14 @@ CREATE TABLE [dbo].[tbl_Centros] (
     [Cod_Fondo]         INT             NULL,
     [Cod_Centro]        NVARCHAR(20)    NOT NULL,
     [Nombre]            NVARCHAR(255)   NULL,
-    [Tipologia]         NVARCHAR(100)   NULL,
-    [Subtipologia]      NVARCHAR(100)   NULL,
+    [Tipologia]         NVARCHAR(255)   NULL,
+    [Subtipologia]      NVARCHAR(255)   NULL,
     [Ubicacion]         NVARCHAR(255)   NULL,
     [Inmueble]          NVARCHAR(255)   NULL,
     [Arrendatario]      NVARCHAR(255)   NULL,
     [GRUPO_ECON]        NVARCHAR(255)   NULL,
-    [Sector_Arrend]     NVARCHAR(100)   NULL,
-    [Riesgo]            NVARCHAR(50)    NULL,
+    [Sector_Arrend]     NVARCHAR(255)   NULL,
+    [Riesgo]            NVARCHAR(255)   NULL,
     [VENC_YR]           INT             NULL,
     CONSTRAINT [PK_tbl_Centros] PRIMARY KEY CLUSTERED ([Id]),
     CONSTRAINT [FK_tbl_Centros_tbl_Niveles]

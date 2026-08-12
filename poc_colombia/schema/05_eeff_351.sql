@@ -44,19 +44,21 @@ GO
 
 /* ============================================================
    tbl_EEFF  (~192K filas -- particionada)
+   Sin FK hacia tbl_Cuentas_EEFF: 19 de 192,197 filas reales usan cuentas
+   auxiliares (ej. 161405001006) que no estan en las 720 cuentas del
+   catalogo resumen -- confirmado al cargar datos reales (mismo hallazgo
+   que en el proyecto original SIF_Colombia_351). Se deja indice.
    ============================================================ */
 CREATE TABLE [dbo].[tbl_EEFF] (
     [FECHA]         DATETIME2(0)    NOT NULL,
     [COD_FONDO]     INT             NULL,
     [COD_CTA]       DECIMAL(18,0)   NOT NULL,
     [NIT_TERCERO]   DECIMAL(18,0)   NULL,
-    [SALDO]         DECIMAL(18,4)   NULL,
+    [SALDO]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_EEFF_tbl_Fechas]
         FOREIGN KEY ([FECHA]) REFERENCES [dbo].[tbl_Fechas]([Mes]),
     CONSTRAINT [FK_tbl_EEFF_tbl_Fondos]
-        FOREIGN KEY ([COD_FONDO]) REFERENCES [dbo].[tbl_Fondos]([COD_FONDO]),
-    CONSTRAINT [FK_tbl_EEFF_tbl_Cuentas_EEFF]
-        FOREIGN KEY ([COD_CTA]) REFERENCES [dbo].[tbl_Cuentas_EEFF]([COD_CTA])
+        FOREIGN KEY ([COD_FONDO]) REFERENCES [dbo].[tbl_Fondos]([COD_FONDO])
 ) ON [PRIMARY];
 GO
 CREATE CLUSTERED INDEX [IX_tbl_EEFF_Clustered] ON [dbo].[tbl_EEFF]([FECHA], [COD_CTA])
@@ -70,23 +72,27 @@ GO
    F351  (~31.5K filas -- formato regulatorio 351)
    "######" del origen (encabezado ilegible) se llama aqui [Campo13],
    igual que en SIF_Colombia_351. [Fecha emisión] queda FLOAT porque en el
-   origen es DOUBLE a pesar del nombre.
+   origen es DOUBLE a pesar del nombre. [Unidad de Captura] y [No asignado
+   por la entidad] tambien tienen decimales reales pese al nombre (no son
+   codigo) -- confirmado al cargar datos reales ("Converting decimal loses
+   precision" con DECIMAL(18,0)). Los campos de moneda quedan en
+   DECIMAL(25,4) (no 19,4) por el mismo motivo de desborde que en 04.
    ============================================================ */
 CREATE TABLE [dbo].[F351] (
     [FECHA]                                     DATETIME2(0)    NOT NULL,
     [INMUEBLE]                                  NVARCHAR(255)   NULL,
     [matrícula]                                 NVARCHAR(50)    NULL,
-    [Unidad de Captura]                         DECIMAL(18,0)   NULL,
-    [No asignado por la entidad]                DECIMAL(18,0)   NULL,
+    [Unidad de Captura]                         DECIMAL(24,4)   NULL,
+    [No asignado por la entidad]                DECIMAL(24,4)   NULL,
     [Fecha emisión]                             FLOAT           NULL,
-    [Valor nominal]                             DECIMAL(19,4)   NULL,
-    [Valor de compra moneda original]           DECIMAL(19,4)   NULL,
-    [Valor de compra en pesos]                  DECIMAL(19,4)   NULL,
-    [Vr mercado o valor presente en $]          DECIMAL(19,4)   NULL,
+    [Valor nominal]                             DECIMAL(25,4)   NULL,
+    [Valor de compra moneda original]           DECIMAL(25,4)   NULL,
+    [Valor de compra en pesos]                  DECIMAL(25,4)   NULL,
+    [Vr mercado o valor presente en $]          DECIMAL(25,4)   NULL,
     [Campo11]                                   NVARCHAR(255)   NULL,
     [Campo12]                                   FLOAT           NULL,
-    [Campo13]                                   DECIMAL(19,4)   NULL,
-    [Campo14]                                   DECIMAL(19,4)   NULL,
+    [Campo13]                                   DECIMAL(25,4)   NULL,
+    [Campo14]                                   DECIMAL(25,4)   NULL,
     [F15]                                       FLOAT           NULL,
     CONSTRAINT [FK_F351_tbl_Fechas]
         FOREIGN KEY ([FECHA]) REFERENCES [dbo].[tbl_Fechas]([Mes])
@@ -100,25 +106,25 @@ GO
    ============================================================ */
 CREATE TABLE [dbo].[VL_CentralPoint] (
     [FECHA]             DATETIME2(0)    NOT NULL,
-    [VLR_FINAL_E1]      DECIMAL(18,4)   NULL,
-    [VLR_FINAL_E2]      DECIMAL(18,4)   NULL,
-    [VLR_E1]            DECIMAL(18,4)   NULL,
-    [VLR_E2]            DECIMAL(18,4)   NULL,
-    [MVA]               DECIMAL(18,4)   NULL,
-    [TOTAL_ACTIVOS_PA]  DECIMAL(18,4)   NULL,
-    [PASIVO_PA]         DECIMAL(18,4)   NULL,
-    [ANT_DF]            DECIMAL(18,4)   NULL,
-    [TOTAL]             DECIMAL(18,4)   NULL,
-    [351]               DECIMAL(18,4)   NULL,
-    [DIF]               DECIMAL(18,4)   NULL,
-    [UVR_E1]            DECIMAL(18,4)   NULL,
-    [UVR_E2]            DECIMAL(18,4)   NULL,
-    [UVR_E1_#2]         DECIMAL(18,4)   NULL,
-    [UVR_E2_#2]         DECIMAL(18,4)   NULL,
-    [AVAL_E1]           DECIMAL(18,4)   NULL,
-    [AVAL_E2]           DECIMAL(18,4)   NULL,
-    [VLR_AVAL_E1]       DECIMAL(18,4)   NULL,
-    [VLR_AVAL_E2]       DECIMAL(18,4)   NULL,
+    [VLR_FINAL_E1]      DECIMAL(24,4)   NULL,
+    [VLR_FINAL_E2]      DECIMAL(24,4)   NULL,
+    [VLR_E1]            DECIMAL(24,4)   NULL,
+    [VLR_E2]            DECIMAL(24,4)   NULL,
+    [MVA]               DECIMAL(24,4)   NULL,
+    [TOTAL_ACTIVOS_PA]  DECIMAL(24,4)   NULL,
+    [PASIVO_PA]         DECIMAL(24,4)   NULL,
+    [ANT_DF]            DECIMAL(24,4)   NULL,
+    [TOTAL]             DECIMAL(24,4)   NULL,
+    [351]               DECIMAL(24,4)   NULL,
+    [DIF]               DECIMAL(24,4)   NULL,
+    [UVR_E1]            DECIMAL(24,4)   NULL,
+    [UVR_E2]            DECIMAL(24,4)   NULL,
+    [UVR_E1_#2]         DECIMAL(24,4)   NULL,
+    [UVR_E2_#2]         DECIMAL(24,4)   NULL,
+    [AVAL_E1]           DECIMAL(24,4)   NULL,
+    [AVAL_E2]           DECIMAL(24,4)   NULL,
+    [VLR_AVAL_E1]       DECIMAL(24,4)   NULL,
+    [VLR_AVAL_E2]       DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_VL_CentralPoint_tbl_Fechas]
         FOREIGN KEY ([FECHA]) REFERENCES [dbo].[tbl_Fechas]([Mes])
 );
@@ -131,7 +137,7 @@ CREATE TABLE [dbo].[VL_Disp_xa_Venta] (
     [FECHA]         DATETIME2(0)    NOT NULL,
     [COD_INM]       DECIMAL(18,0)   NOT NULL,
     [DESCR_INM]     NVARCHAR(255)   NULL,
-    [VALOR]         DECIMAL(18,4)   NULL,
+    [VALOR]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_VL_Disp_xa_Venta_tbl_Inmuebles]
         FOREIGN KEY ([FECHA], [COD_INM]) REFERENCES [dbo].[tbl_Inmuebles]([Fecha], [Cod_Inm])
 );
@@ -149,7 +155,7 @@ CREATE TABLE [dbo].[tbl_ValorLibros_xInmueble] (
     [FECHA]     DATETIME2(0)    NOT NULL,
     [Cod_Inm]   DECIMAL(18,0)   NOT NULL,
     [COD_CTA]   DECIMAL(18,0)   NOT NULL,
-    [VALOR]     DECIMAL(18,4)   NULL,
+    [VALOR]     DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_ValorLibros_xInmueble_tbl_Inmuebles]
         FOREIGN KEY ([FECHA], [Cod_Inm]) REFERENCES [dbo].[tbl_Inmuebles]([Fecha], [Cod_Inm])
 );

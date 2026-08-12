@@ -17,6 +17,10 @@
    [PRIMARY] por ahora (volumen menor), pero con el mismo indice clustered
    (Fecha primero) para poder convertir a particionada sin rediseño cuando
    crezca -- ver 03_particiones.sql.
+
+   [Valor] es DECIMAL(24,4), no (18,4): con datos reales de Info Portafolio
+   aparecieron valores que desbordaban (18,4) ("Arithmetic overflow error
+   converting float to data type numeric"). (24,4) da margen de sobra.
 ============================================================================ */
 
 /* ============================================================
@@ -29,7 +33,7 @@ CREATE TABLE [dbo].[tbl_Valores] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_tbl_Fondos]
@@ -69,7 +73,7 @@ CREATE TABLE [dbo].[tbl_Valores_Valor_Libros] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Valor_Libros_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Valor_Libros_tbl_Niveles]
@@ -93,7 +97,7 @@ CREATE TABLE [dbo].[tbl_Valores_Gastos_Otros] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Gastos_Otros_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Gastos_Otros_tbl_Fondos]
@@ -120,7 +124,7 @@ CREATE TABLE [dbo].[tbl_Valores_Gastos] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Gastos_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Gastos_tbl_Niveles]
@@ -141,7 +145,7 @@ CREATE TABLE [dbo].[tbl_Valores_Avaluos] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Avaluos_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Avaluos_tbl_Niveles]
@@ -163,7 +167,7 @@ CREATE TABLE [dbo].[tbl_Valores_Ingresos] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Ingresos_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Ingresos_tbl_Niveles]
@@ -185,7 +189,7 @@ CREATE TABLE [dbo].[tbl_Valores_Nexus] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Nexus_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Nexus_tbl_Fondos]
@@ -208,7 +212,7 @@ CREATE TABLE [dbo].[tbl_Valores_Viva_Malls] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_Viva_Malls_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_Viva_Malls_tbl_Niveles]
@@ -230,7 +234,7 @@ CREATE TABLE [dbo].[tbl_Valores_GLA_2008_2023] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_GLA_2008_2023_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_GLA_2008_2023_tbl_Niveles]
@@ -251,7 +255,7 @@ CREATE TABLE [dbo].[tbl_Valores_2011_2023_PYG] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_2011_2023_PYG_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_2011_2023_PYG_tbl_Niveles]
@@ -273,7 +277,7 @@ CREATE TABLE [dbo].[tbl_Valores_2011_2023_VlrLibros] (
     [Cod_Nivel]     INT             NOT NULL,
     [Cod_Centro]    NVARCHAR(20)    NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Valores_2011_2023_VlrLibros_tbl_Tiempos]
         FOREIGN KEY ([Cod_Tiempo]) REFERENCES [dbo].[tbl_Tiempos]([Cod_Tiempo]),
     CONSTRAINT [FK_tbl_Valores_2011_2023_VlrLibros_tbl_Niveles]
@@ -293,7 +297,7 @@ CREATE TABLE [dbo].[tbl_Pagos_Inmuebles] (
     [Fecha_TRN]     DATETIME2(0)    NULL,
     [Cod_Inm]       DECIMAL(18,0)   NULL,
     [Cod_Cuenta]    INT             NOT NULL,
-    [Valor]         DECIMAL(18,4)   NULL,
+    [Valor]         DECIMAL(24,4)   NULL,
     CONSTRAINT [FK_tbl_Pagos_Inmuebles_tbl_Cuentas]
         FOREIGN KEY ([Cod_Cuenta]) REFERENCES [dbo].[tbl_Cuentas]([Cod_Cuenta])
 );
