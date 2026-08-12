@@ -8,3 +8,6 @@ Colombia_2024/
 
 __pycache__/
 *.pyc
+
+# Credenciales locales, nunca deben subirse al repo.
+db_config.json
